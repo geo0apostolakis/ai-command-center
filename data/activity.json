@@ -1,0 +1,17 @@
+[
+  {
+    "msg": "Newsletter: 10 recipients matched",
+    "agent": "newsletter",
+    "ts": "2026-11-01T16:51:57.689Z"
+  },
+  {
+    "msg": "Librarian answered: \"How does the R&D credit work?\"",
+    "agent": "librarian",
+    "ts": "2026-11-01T16:51:55.390Z"
+  },
+  {
+    "msg": "Sorter: \"Nexus_AI_Corp_W2_2025.pdf\" → Nexus AI Corp/2025/W-2/",
+    "agent": "sorter",
+    "ts": "2026-11-01T16:51:54.107Z"
+  }
+]

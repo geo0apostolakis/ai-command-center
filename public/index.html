@@ -1,0 +1,1750 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI Command Center</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<style>
+body {
+  background: #000000;
+  background-image:
+    radial-gradient(circle at 1px 1px, rgba(139,92,246,0.22) 1px, transparent 0),
+    radial-gradient(circle at 1px 1px, rgba(59,130,246,0.18) 1px, transparent 0),
+    radial-gradient(circle at 1px 1px, rgba(236,72,153,0.15) 1px, transparent 0);
+  background-size: 20px 20px, 30px 30px, 25px 25px;
+  background-position: 0 0, 10px 10px, 15px 5px;
+  min-height: 100vh;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  color: #e2e8f0;
+}
+
+.neon-btn {
+  position: relative; border: 1px solid rgba(59,130,246,0.25);
+  background: rgba(59,130,246,0.06); color: #e2e8f0; border-radius: 9999px;
+  padding: 6px 20px; font-size: 0.875rem; cursor: pointer;
+  transition: background .2s, border-color .2s; overflow: hidden; white-space: nowrap;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.neon-btn:hover { background: rgba(59,130,246,0.12); border-color: rgba(59,130,246,0.45); }
+.neon-btn::after {
+  content:''; position:absolute; bottom:-1px; left:12.5%; right:12.5%; height:1px;
+  background:linear-gradient(to right,transparent,#3b82f6,transparent); opacity:.25;
+}
+.neon-btn:disabled { opacity:.4; cursor:not-allowed; }
+.neon-btn-solid {
+  background:#3b82f6; border:1px solid transparent; color:#fff; border-radius:9999px;
+  padding:7px 22px; font-size:.875rem; cursor:pointer; transition:background .2s;
+  display:inline-flex; align-items:center; gap:6px;
+}
+.neon-btn-solid:hover { background:#2563eb; }
+.neon-btn-solid:disabled { opacity:.4; cursor:not-allowed; }
+.neon-btn-sm  { padding:4px 14px; font-size:.78rem; }
+.neon-btn-lg  { padding:10px 32px; font-size:1rem; }
+
+.glass {
+  background:rgba(12,12,22,.72); border:1px solid rgba(255,255,255,.07);
+  border-radius:14px; backdrop-filter:blur(14px);
+}
+.glass-light {
+  background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.07); border-radius:10px;
+}
+
+#sidebar {
+  width:244px; min-width:244px; background:rgba(4,4,10,.88);
+  border-right:1px solid rgba(255,255,255,.06); backdrop-filter:blur(18px);
+  display:flex; flex-direction:column; height:100vh;
+  position:fixed; top:0; left:0; z-index:50; overflow-y:auto;
+}
+.nav-item {
+  display:flex; align-items:center; gap:10px; padding:9px 14px;
+  border-radius:8px; margin:2px 8px; color:#64748b; cursor:pointer;
+  font-size:.84rem; transition:background .15s,color .15s; border:1px solid transparent;
+}
+.nav-item:hover { background:rgba(255,255,255,.04); color:#cbd5e1; }
+.nav-item.active { background:rgba(59,130,246,.14); color:#60a5fa; border-color:rgba(59,130,246,.2); }
+.nav-item.coming { opacity:.35; cursor:default; }
+.nav-icon { font-size:1rem; width:20px; text-align:center; flex-shrink:0; }
+.status-dot { width:7px; height:7px; border-radius:50%; margin-left:auto; flex-shrink:0; }
+.status-dot.ok  { background:#22c55e; box-shadow:0 0 5px #22c55e88; }
+.status-dot.bad { background:#374151; }
+
+#main { margin-left:244px; min-height:100vh; display:flex; flex-direction:column; }
+.topbar {
+  position:sticky; top:0; z-index:40; background:rgba(4,4,10,.82);
+  backdrop-filter:blur(18px); border-bottom:1px solid rgba(255,255,255,.06);
+  display:flex; align-items:center; gap:12px; padding:12px 24px;
+}
+.panel { display:none; padding:28px 24px; max-width:1080px; margin:0 auto; width:100%; }
+.panel.active { display:block; }
+
+.inp {
+  width:100%; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.1);
+  border-radius:8px; color:#e2e8f0; padding:9px 13px; font-size:.875rem;
+  outline:none; transition:border-color .2s; resize:vertical;
+}
+.inp:focus { border-color:rgba(59,130,246,.5); }
+.inp::placeholder { color:#334155; }
+select.inp option { background:#0f0f1a; }
+
+#chat-messages { display:flex; flex-direction:column; gap:10px; }
+.bubble-user {
+  align-self:flex-end; background:rgba(59,130,246,.18);
+  border:1px solid rgba(59,130,246,.28); border-radius:14px 14px 4px 14px;
+  padding:10px 14px; max-width:75%; font-size:.875rem; line-height:1.55;
+}
+.bubble-bot {
+  align-self:flex-start; background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.09); border-radius:14px 14px 14px 4px;
+  padding:10px 14px; max-width:80%; color:#cbd5e1; font-size:.875rem; line-height:1.6;
+}
+.bubble-bot p { margin:0 0 6px; }
+.bubble-bot p:last-child { margin:0; }
+.bubble-bot code { background:rgba(255,255,255,.1); padding:2px 5px; border-radius:4px; font-size:.8rem; color:#93c5fd; }
+.bubble-bot ul,.bubble-bot ol { padding-left:18px; margin:4px 0; }
+.bubble-bot strong { color:#e2e8f0; }
+
+.tab-btn {
+  padding:8px 18px; border-radius:8px 8px 0 0; font-size:.84rem; color:#475569;
+  cursor:pointer; border-bottom:2px solid transparent; background:none;
+  border-left:none; border-right:none; border-top:none; transition:color .15s,border-color .15s;
+}
+.tab-btn.active { color:#60a5fa; border-bottom-color:#3b82f6; }
+
+.dropzone {
+  border:2px dashed rgba(59,130,246,.28); border-radius:12px;
+  padding:48px 24px; text-align:center; color:#475569; cursor:pointer;
+  transition:border-color .2s, background .2s;
+}
+.dropzone.dragover { border-color:#3b82f6; background:rgba(59,130,246,.06); color:#93c5fd; }
+.dropzone:hover { border-color:rgba(59,130,246,.48); }
+
+#toast-wrap { position:fixed; bottom:24px; right:24px; z-index:9999; display:flex; flex-direction:column; gap:8px; }
+.toast {
+  padding:11px 18px; border-radius:10px; font-size:.84rem;
+  border:1px solid rgba(255,255,255,.1); animation:slideIn .22s ease;
+  min-width:220px; max-width:360px; color:#fff;
+}
+.toast.ok   { background:rgba(21,128,61,.92); }
+.toast.err  { background:rgba(185,28,28,.92); }
+.toast.info { background:rgba(30,64,175,.92); }
+@keyframes slideIn { from{transform:translateX(60px);opacity:0} to{transform:translateX(0);opacity:1} }
+
+#email-drawer {
+  position:fixed; top:0; right:-490px; width:470px; height:100vh;
+  background:rgba(4,4,12,.97); border-left:1px solid rgba(255,255,255,.08);
+  backdrop-filter:blur(22px); z-index:200; transition:right .3s ease;
+  display:flex; flex-direction:column; overflow:hidden;
+}
+#email-drawer.open { right:0; }
+
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.72); z-index:300; display:none; align-items:center; justify-content:center; }
+.modal-overlay.open { display:flex; }
+.modal {
+  background:#09090f; border:1px solid rgba(255,255,255,.1); border-radius:16px;
+  padding:28px; width:600px; max-width:96vw; max-height:90vh; overflow-y:auto; position:relative;
+}
+
+.spin {
+  width:16px; height:16px; border:2px solid rgba(29,111,251,.15);
+  border-top-color:#3b82f6; border-radius:50%; animation:spin .7s linear infinite; display:inline-block;
+  flex-shrink:0;
+}
+@keyframes spin { to{transform:rotate(360deg)} }
+
+/* ── Flux Progress Bar ── */
+.flux-loader { display:flex; flex-direction:column; align-items:center; gap:10px; width:100%; }
+.flux-label {
+  font-size:.8rem; font-weight:600; color:#64748b; text-align:center; min-height:20px;
+  transition:opacity .3s ease; letter-spacing:.01em;
+}
+.flux-track {
+  width:100%; height:5px; border-radius:9999px; overflow:hidden; position:relative;
+  background:rgba(255,255,255,.07);
+  box-shadow:inset 0 2px 3px rgba(0,0,0,.45),inset 0 -1px 2px rgba(255,255,255,.04);
+}
+.flux-fill {
+  height:100%; border-radius:9999px; position:relative; overflow:hidden;
+  background:linear-gradient(90deg,#1d6ffb 0%,#4da8ff 35%,#74e1ff 55%,#4da8ff 78%,#1d6ffb 100%);
+  box-shadow:0 0 12px rgba(29,111,251,.65),0 0 24px rgba(116,225,255,.35),inset 0 1px 0 rgba(255,255,255,.4);
+  transition:width .55s cubic-bezier(.22,1,.36,1);
+}
+.flux-sheen {
+  position:absolute; inset:0; border-radius:inherit;
+  background:linear-gradient(90deg,transparent 0%,rgba(255,255,255,.55) 50%,transparent 100%);
+  mix-blend-mode:screen; animation:flux-sheen 1.6s linear infinite;
+}
+@keyframes flux-sheen { from{transform:translateX(-110%)} to{transform:translateX(210%)} }
+
+/* ── Newsletter step connector lines ── */
+.nl-step-line {
+  height:1px; flex:1; background:rgba(255,255,255,.07); position:relative; overflow:visible;
+}
+.nl-step-line::after {
+  content:''; position:absolute; top:0; left:0; height:100%; width:0%;
+  background:linear-gradient(90deg,#1d6ffb,#74e1ff);
+  box-shadow:0 0 8px rgba(116,225,255,.7);
+  transition:width .65s cubic-bezier(.22,1,.36,1) .1s;
+}
+.nl-step-line.filled::after { width:100%; }
+
+/* ── Nav icon SVG support ── */
+.nav-icon {
+  width:20px; height:20px; display:flex; align-items:center; justify-content:center; flex-shrink:0;
+}
+.nav-icon svg { width:15px; height:15px; }
+.icon-lg svg { width:22px; height:22px; }
+
+.badge { padding:2px 10px; border-radius:9999px; font-size:.72rem; font-weight:700; }
+.badge-high   { background:rgba(239,68,68,.14); color:#f87171; border:1px solid rgba(239,68,68,.3); }
+.badge-medium { background:rgba(234,179,8,.14); color:#fbbf24; border:1px solid rgba(234,179,8,.3); }
+.badge-low    { background:rgba(34,197,94,.14); color:#4ade80; border:1px solid rgba(34,197,94,.3); }
+
+.md h1,.md h2,.md h3 { color:#e2e8f0; margin:12px 0 6px; }
+.md p { color:#94a3b8; margin:0 0 8px; line-height:1.6; }
+.md ul,.md ol { color:#94a3b8; padding-left:20px; margin:4px 0 10px; }
+.md code { background:rgba(255,255,255,.09); padding:2px 5px; border-radius:4px; font-size:.8rem; color:#93c5fd; }
+.md pre { background:rgba(255,255,255,.05); padding:12px; border-radius:8px; overflow-x:auto; margin:10px 0; }
+.md a { color:#60a5fa; } .md strong { color:#e2e8f0; }
+
+::-webkit-scrollbar { width:5px; height:5px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:rgba(255,255,255,.1); border-radius:4px; }
+
+.conf-high   { color:#4ade80; }
+.conf-medium { color:#fbbf24; }
+.conf-low    { color:#f87171; }
+
+.sources-panel {
+  margin-top:6px; padding:10px 14px;
+  background:rgba(59,130,246,.06); border:1px solid rgba(59,130,246,.18);
+  border-radius:10px; font-size:.78rem; max-width:80%;
+}
+.sources-panel-title { color:#64748b; font-size:.72rem; font-weight:600; letter-spacing:.04em; text-transform:uppercase; margin-bottom:6px; }
+.source-item { display:flex; flex-direction:column; gap:2px; margin-bottom:8px; padding-bottom:8px; border-bottom:1px solid rgba(255,255,255,.05); }
+.source-item:last-child { margin-bottom:0; padding-bottom:0; border-bottom:none; }
+.source-header { display:flex; align-items:center; gap:6px; }
+.source-num { background:rgba(59,130,246,.22); color:#93c5fd; border-radius:4px; padding:1px 6px; font-weight:700; font-size:.72rem; flex-shrink:0; }
+.source-loc { color:#60a5fa; font-weight:500; }
+.source-score { margin-left:auto; color:#374151; font-size:.7rem; }
+.source-excerpt { color:#475569; font-style:italic; margin-top:3px; line-height:1.45; }
+
+.ingest-dropzone {
+  border:2px dashed rgba(139,92,246,.3); border-radius:12px;
+  padding:28px 20px; text-align:center; color:#475569; cursor:pointer;
+  transition:border-color .2s,background .2s;
+}
+.ingest-dropzone:hover,.ingest-dropzone.dragover { border-color:#8b5cf6; background:rgba(139,92,246,.06); color:#a78bfa; }
+.ingest-file-preview {
+  display:flex; align-items:center; gap:10px; padding:10px 14px;
+  background:rgba(139,92,246,.08); border:1px solid rgba(139,92,246,.2);
+  border-radius:8px; margin-top:8px;
+}
+.ingest-progress { margin-top:10px; }
+.ingest-progress-bar { height:4px; background:rgba(255,255,255,.07); border-radius:2px; overflow:hidden; margin-top:6px; }
+.ingest-progress-fill { height:100%; background:linear-gradient(90deg,#8b5cf6,#3b82f6); border-radius:2px; transition:width .4s ease; }
+</style>
+</head>
+<body>
+
+<!-- ══ SIDEBAR ══ -->
+<div id="sidebar">
+  <div class="px-5 py-5 border-b border-white/5">
+    <div class="text-blue-400/60 text-xs font-semibold tracking-widest uppercase mb-1">Acme Tax</div>
+    <div class="text-white font-bold text-lg leading-tight">Command Center</div>
+    <div class="text-slate-600 text-xs mt-1">AI Operations Platform</div>
+  </div>
+
+  <nav class="flex-1 py-3 space-y-0.5">
+    <div class="px-4 pt-2 pb-1 text-xs text-slate-700 uppercase tracking-widest font-semibold">Overview</div>
+    <div class="nav-item active" data-panel="dashboard">
+      <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg></span>Dashboard
+    </div>
+
+    <div class="px-4 pt-4 pb-1 text-xs text-slate-700 uppercase tracking-widest font-semibold">Agents</div>
+    <div class="nav-item" data-panel="librarian">
+      <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></span>Librarian
+      <span class="status-dot bad" id="dot-librarian"></span>
+    </div>
+    <div class="nav-item" data-panel="sorter">
+      <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/><path d="M12 10v6"/><path d="m15 13-3 3-3-3"/></svg></span>AI Sorter
+      <span class="status-dot ok" id="dot-sorter"></span>
+    </div>
+    <div class="nav-item" data-panel="newsletter">
+      <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg></span>Newsletter
+      <span class="status-dot ok" id="dot-newsletter"></span>
+    </div>
+    <div class="nav-item" data-panel="deadlines">
+      <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2"/><path d="M5 3 2 6"/><path d="m22 6-3-3"/></svg></span>Deadline Watcher
+      <span class="status-dot ok" id="dot-deadlines"></span>
+    </div>
+
+    <div class="px-4 pt-4 pb-1 text-xs text-slate-700 uppercase tracking-widest font-semibold">Coming Soon</div>
+    <div class="nav-item coming"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg></span>Email Triage<span class="ml-auto text-xs text-slate-700 font-semibold">SOON</span></div>
+    <div class="nav-item" data-panel="onboarding"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="7" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></span>Client Onboarding</div>
+    <div class="nav-item coming"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" x2="18" y1="20" y2="10"/><line x1="12" x2="12" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="14"/></svg></span>Monthly Report<span class="ml-auto text-xs text-slate-700 font-semibold">SOON</span></div>
+    <div class="nav-item coming"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2v6l3 3a7 7 0 1 1-10 0l3-3V2"/><path d="M6 7h12"/></svg></span>R&amp;D Tracker<span class="ml-auto text-xs text-slate-700 font-semibold">SOON</span></div>
+    <div class="nav-item coming"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22h6a2 2 0 0 0 2-2V7l-5-5H6a2 2 0 0 0-2 2v10"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10.4 12.6a2 2 0 1 1 3 3L8 21l-4 1 1-4Z"/></svg></span>Meeting Notes<span class="ml-auto text-xs text-slate-700 font-semibold">SOON</span></div>
+  </nav>
+
+  <div class="border-t border-white/5 px-4 py-4 flex gap-2">
+    <button class="neon-btn neon-btn-sm flex-1" onclick="openModal('status-modal')"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg> API Status</button>
+    <button class="neon-btn neon-btn-sm" onclick="openEmailDrawer()" title="Sent emails"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg></button>
+  </div>
+</div>
+
+<!-- ══ MAIN ══ -->
+<div id="main">
+  <div class="topbar">
+    <span id="topbar-title" class="text-white font-semibold text-sm flex-1">Dashboard</span>
+    <span id="env-pill" class="text-xs px-3 py-1 rounded-full border border-yellow-500/30 text-yellow-400 bg-yellow-500/10">TEST</span>
+    <button class="neon-btn neon-btn-sm" onclick="checkHealth()"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg> Health</button>
+  </div>
+
+  <div class="flex-1 pb-12">
+
+  <!-- ── DASHBOARD ── -->
+  <section class="panel active" id="panel-dashboard">
+    <h2 class="text-white text-xl font-bold mb-6">Good morning</h2>
+    <div class="grid grid-cols-3 gap-4 mb-8">
+      <div class="glass p-5">
+        <div class="text-slate-500 text-xs uppercase tracking-widest mb-1">Urgent Deadlines</div>
+        <div id="dash-deadlines" class="text-3xl font-bold text-white">—</div>
+        <div class="text-slate-600 text-xs mt-1">Run Deadline Watcher to refresh</div>
+      </div>
+      <div class="glass p-5">
+        <div class="text-slate-500 text-xs uppercase tracking-widest mb-1">Emails Sent Today</div>
+        <div id="dash-emails" class="text-3xl font-bold text-white">—</div>
+        <div class="text-slate-600 text-xs mt-1">Open Sent Emails drawer</div>
+      </div>
+      <div class="glass p-5">
+        <div class="text-slate-500 text-xs uppercase tracking-widest mb-1">Active Clients</div>
+        <div id="dash-clients" class="text-3xl font-bold text-white">10</div>
+        <div class="text-slate-600 text-xs mt-1">Funded US tech startups</div>
+      </div>
+    </div>
+
+    <h3 class="text-slate-300 font-semibold mb-3">Quick Actions</h3>
+    <div class="grid grid-cols-4 gap-3 mb-8">
+      <button class="glass p-4 text-left hover:border-blue-500/30 transition-all cursor-pointer w-full" onclick="nav('librarian')">
+        <div class="icon-lg text-blue-400 mb-3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></div>
+        <div class="text-white text-sm font-semibold">Ask Librarian</div>
+        <div class="text-slate-600 text-xs">Tax law Q&amp;A with RAG</div>
+      </button>
+      <button class="glass p-4 text-left hover:border-blue-500/30 transition-all cursor-pointer w-full" onclick="nav('sorter')">
+        <div class="icon-lg text-blue-400 mb-3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/><path d="M12 10v6"/><path d="m15 13-3 3-3-3"/></svg></div>
+        <div class="text-white text-sm font-semibold">Sort Documents</div>
+        <div class="text-slate-600 text-xs">Drop &amp; AI-classify files</div>
+      </button>
+      <button class="glass p-4 text-left hover:border-blue-500/30 transition-all cursor-pointer w-full" onclick="nav('newsletter')">
+        <div class="icon-lg text-blue-400 mb-3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg></div>
+        <div class="text-white text-sm font-semibold">Newsletter</div>
+        <div class="text-slate-600 text-xs">AI-drafted client blast</div>
+      </button>
+      <button class="glass p-4 text-left hover:border-blue-500/30 transition-all cursor-pointer w-full" onclick="nav('deadlines')">
+        <div class="icon-lg text-blue-400 mb-3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2"/><path d="M5 3 2 6"/><path d="m22 6-3-3"/></svg></div>
+        <div class="text-white text-sm font-semibold">Deadlines</div>
+        <div class="text-slate-600 text-xs">Upcoming filings</div>
+      </button>
+    </div>
+
+    <h3 class="text-slate-300 font-semibold mb-3">Recent Activity</h3>
+    <div id="dash-activity" class="glass p-4 text-slate-600 text-sm">
+      No recent activity — start using an agent above.
+    </div>
+  </section>
+
+  <!-- ── LIBRARIAN ── -->
+  <section class="panel" id="panel-librarian">
+    <div class="flex items-center gap-3 mb-6">
+      <span class="icon-lg text-blue-400"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></span>
+      <div>
+        <h2 class="text-white text-xl font-bold">Librarian</h2>
+        <p class="text-slate-500 text-xs">RAG Agent — 3 Pinecone namespaces: Tax Laws · IRS Circulars · Client Notes</p>
+      </div>
+    </div>
+    <div class="border-b border-white/10 mb-5 flex gap-1 items-center">
+      <button class="tab-btn active" onclick="libTab('ask')"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:4px"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Ask</button>
+      <button class="tab-btn" onclick="libTab('teach')"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:4px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>Teach</button>
+      <button class="ml-auto neon-btn neon-btn-sm text-xs" onclick="newChat()" title="Start a new conversation">+ New Chat</button>
+    </div>
+
+    <!-- ASK -->
+    <div id="lib-ask-tab">
+      <div id="chat-messages" class="min-h-[260px] max-h-[420px] overflow-y-auto pr-1 mb-4 space-y-3">
+        <div class="bubble-bot">Hello! I can answer questions about US tax law, IRS deadlines, R&amp;D credits, equity taxation, and client-specific notes. What would you like to know?</div>
+      </div>
+      <div class="flex gap-2">
+        <input id="chat-input" class="inp flex-1" type="text"
+               placeholder="Ask a tax question…"
+               onkeydown="if(event.key==='Enter')sendChat()" />
+        <button class="neon-btn-solid" onclick="sendChat()" id="chat-send-btn">Send</button>
+      </div>
+      <div class="mt-3 flex gap-2 flex-wrap items-center">
+        <span class="text-xs text-slate-600">Quick:</span>
+        <button class="neon-btn neon-btn-sm" onclick="quickAsk('What are the R&D credit requirements under IRC Section 41 for a C-Corp?')">R&amp;D Credit rules</button>
+        <button class="neon-btn neon-btn-sm" onclick="quickAsk('When is Form 1120 due for a calendar-year C-Corp in 2026?')">1120 deadline</button>
+        <button class="neon-btn neon-btn-sm" onclick="quickAsk('What documents does a new C-Corp client need to provide for onboarding?')">New client docs</button>
+        <button class="neon-btn neon-btn-sm" onclick="quickAsk('How are RSU vest events taxed for startup employees?')">RSU taxation</button>
+      </div>
+    </div>
+
+    <!-- TEACH -->
+    <div id="lib-teach-tab" class="hidden space-y-4">
+
+      <!-- File Ingest (primary) -->
+      <div>
+        <p class="text-slate-400 text-sm mb-3">Upload a document — it gets chunked, embedded, and indexed into the knowledge base so you can ask questions about it.</p>
+        <div id="ingest-dropzone" class="ingest-dropzone" onclick="document.getElementById('ingest-file-input').click()">
+          <div class="flex justify-center text-purple-400 mb-2"><svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><path d="M12 18v-6"/><path d="m9 15 3-3 3 3"/></svg></div>
+          <div class="font-medium text-sm mb-1">Drop a document here or click to browse</div>
+          <div class="text-xs">PDF, TXT, MD — any text-based file</div>
+          <input id="ingest-file-input" type="file" class="hidden" accept=".pdf,.txt,.md,.csv,.json" onchange="onIngestFileSelect(this.files[0])" />
+        </div>
+        <div id="ingest-file-preview" class="ingest-file-preview hidden">
+          <span class="text-purple-400"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg></span>
+          <div class="flex-1 min-w-0">
+            <div id="ingest-file-name" class="text-white text-sm font-semibold truncate"></div>
+            <div id="ingest-file-size" class="text-slate-500 text-xs"></div>
+          </div>
+          <button class="text-slate-600 hover:text-slate-400 text-xs flex items-center gap-1" onclick="clearIngestFile()"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg> Remove</button>
+        </div>
+        <div class="mt-3 flex items-center gap-3">
+          <div class="flex-1">
+            <label class="text-slate-500 text-xs mb-1 block">Target namespace</label>
+            <select id="ingest-namespace" class="inp">
+              <option value="client-memory">client-memory</option>
+              <option value="tax-laws">tax-laws</option>
+              <option value="irs-guidance">irs-guidance</option>
+            </select>
+          </div>
+          <button class="neon-btn-solid neon-btn-lg mt-4" id="ingest-btn" onclick="doIngest()" disabled>
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/></svg> Ingest to Knowledge Base
+          </button>
+        </div>
+        <div id="ingest-progress" class="ingest-progress hidden">
+          <div id="ingest-status" class="text-xs text-slate-400 mb-1"></div>
+          <div class="ingest-progress-bar"><div id="ingest-fill" class="ingest-progress-fill" style="width:0%"></div></div>
+        </div>
+        <div id="ingest-result" class="hidden mt-3 glass-light p-3 text-sm text-green-400"></div>
+      </div>
+
+      <!-- Manual note (secondary) -->
+      <details class="glass-light p-3 cursor-pointer">
+        <summary class="text-slate-500 text-xs font-semibold select-none uppercase tracking-wider flex items-center gap-1.5"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;flex-shrink:0"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg> Add a quick note instead</summary>
+        <div class="mt-3 space-y-3">
+          <textarea id="teach-text" class="inp" rows="4" placeholder="e.g. Nexus AI Corp has $2.3M in qualified R&D spend for 2025..."></textarea>
+          <div class="grid grid-cols-2 gap-3">
+            <input id="teach-client" class="inp" type="text" placeholder="Client (optional)" />
+            <select id="teach-category" class="inp">
+              <option value="">— category —</option>
+              <option>Tax Law</option><option>Client Note</option><option>IRS Guidance</option>
+              <option>R&D Documentation</option><option>Internal Process</option><option>Other</option>
+            </select>
+          </div>
+          <button class="neon-btn" id="teach-btn" onclick="doTeach()"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg> Remember this</button>
+          <div id="teach-result" class="hidden glass-light p-3 text-sm text-green-400"></div>
+        </div>
+      </details>
+
+    </div>
+  </section>
+
+  <!-- ── AI SORTER ── -->
+  <section class="panel" id="panel-sorter">
+    <div class="flex items-center gap-3 mb-5">
+      <span class="icon-lg text-blue-400"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/><path d="M12 10v6"/><path d="m15 13-3 3-3-3"/></svg></span>
+      <div>
+        <h2 class="text-white text-xl font-bold">AI Sorter</h2>
+        <p class="text-slate-500 text-xs">AI classifies tax documents, matches to client, and files into the right folder</p>
+      </div>
+    </div>
+
+    <div class="border-b border-white/10 mb-5 flex gap-1 items-center">
+      <button class="tab-btn active" onclick="sortTab('crm')"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:4px"><rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg>Client CRM</button>
+      <button class="tab-btn" onclick="sortTab('sort')"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:4px"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>Sort Files</button>
+    </div>
+
+    <!-- CRM TAB -->
+    <div id="sort-crm-tab">
+      <div class="flex items-center justify-between mb-3">
+        <p class="text-slate-500 text-xs">Active clients — documents sorted into their local folders</p>
+        <button class="neon-btn neon-btn-sm text-xs" onclick="nav('onboarding')">+ Onboard New Client</button>
+      </div>
+      <div id="crm-table" class="space-y-1">
+        <div class="grid grid-cols-12 gap-2 px-3 py-1 text-xs text-slate-600 font-semibold uppercase tracking-wider border-b border-white/05">
+          <span class="col-span-4">Company</span>
+          <span class="col-span-2">Type · State</span>
+          <span class="col-span-2">EIN</span>
+          <span class="col-span-2">Contact</span>
+          <span class="col-span-2">Services</span>
+        </div>
+        <div id="crm-rows" class="space-y-1 max-h-[380px] overflow-y-auto"></div>
+      </div>
+    </div>
+
+    <!-- SORT TAB -->
+    <div id="sort-sort-tab" class="hidden">
+      <!-- Demo files quick-sort -->
+      <div class="mb-5">
+        <div class="flex items-center justify-between mb-2">
+          <p class="text-slate-500 text-xs">Files sitting in <code class="text-slate-400 bg-white/05 px-1 rounded">data/inbox/</code> — click any file to sort it:</p>
+          <button onclick="resetInbox()" class="neon-btn neon-btn-sm text-xs"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg> Reset Demo</button>
+        </div>
+        <div id="demo-file-chips" class="flex flex-wrap gap-2"></div>
+      </div>
+
+      <div id="sort-dropzone" class="dropzone mb-5"
+           onclick="document.getElementById('sort-file-input').click()">
+        <div class="flex justify-center text-slate-600 mb-3"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg></div>
+        <div class="text-slate-400 font-medium mb-1">Or drag &amp; drop tax documents here</div>
+        <div class="text-slate-600 text-sm">PDFs, W-2s, 1099s, K-1s, statements — multiple files OK</div>
+        <input id="sort-file-input" type="file" multiple class="hidden"
+               onchange="handleSortFiles(this.files)" />
+      </div>
+    </div>
+
+    <!-- Results (always visible) -->
+    <div id="sort-rows" class="space-y-3 mt-2"></div>
+  </section>
+
+  <!-- ── CLIENT ONBOARDING ── -->
+  <section class="panel" id="panel-onboarding">
+    <div class="flex items-center gap-3 mb-6">
+      <span class="icon-lg text-blue-400"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="7" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></span>
+      <div>
+        <h2 class="text-white text-xl font-bold">Client Onboarding</h2>
+        <p class="text-slate-500 text-xs">Register a new client — creates their profile and local folder structure</p>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4 max-w-2xl">
+      <div>
+        <label class="text-slate-400 text-xs mb-1 block">Company Name *</label>
+        <input id="ob-name" class="inp" type="text" placeholder="e.g. Vega AI Corp" />
+      </div>
+      <div>
+        <label class="text-slate-400 text-xs mb-1 block">EIN *</label>
+        <input id="ob-ein" class="inp" type="text" placeholder="e.g. 88-1234567" />
+      </div>
+      <div>
+        <label class="text-slate-400 text-xs mb-1 block">Entity Type</label>
+        <select id="ob-type" class="inp">
+          <option>C-Corp</option><option>S-Corp</option><option>LLC</option><option>Partnership</option>
+        </select>
+      </div>
+      <div>
+        <label class="text-slate-400 text-xs mb-1 block">State of Incorporation</label>
+        <input id="ob-state" class="inp" type="text" placeholder="e.g. DE" maxlength="2" />
+      </div>
+      <div>
+        <label class="text-slate-400 text-xs mb-1 block">Contact Name</label>
+        <input id="ob-contact" class="inp" type="text" placeholder="e.g. Alex Kim" />
+      </div>
+      <div>
+        <label class="text-slate-400 text-xs mb-1 block">Contact Email</label>
+        <input id="ob-email" class="inp" type="email" placeholder="e.g. alex@vega-ai.example.com" />
+      </div>
+    </div>
+
+    <div class="mt-4 max-w-2xl">
+      <label class="text-slate-400 text-xs mb-2 block">Services</label>
+      <div class="flex flex-wrap gap-2" id="ob-services">
+        <label class="flex items-center gap-1.5 text-sm text-slate-300 cursor-pointer"><input type="checkbox" value="corporate-tax" checked class="accent-blue-500" /> Corporate Tax</label>
+        <label class="flex items-center gap-1.5 text-sm text-slate-300 cursor-pointer"><input type="checkbox" value="r-and-d" class="accent-blue-500" /> R&amp;D Credits</label>
+        <label class="flex items-center gap-1.5 text-sm text-slate-300 cursor-pointer"><input type="checkbox" value="equity" class="accent-blue-500" /> Equity &amp; QSBS</label>
+        <label class="flex items-center gap-1.5 text-sm text-slate-300 cursor-pointer"><input type="checkbox" value="multi-state" class="accent-blue-500" /> Multi-State</label>
+        <label class="flex items-center gap-1.5 text-sm text-slate-300 cursor-pointer"><input type="checkbox" value="crypto" class="accent-blue-500" /> Crypto</label>
+        <label class="flex items-center gap-1.5 text-sm text-slate-300 cursor-pointer"><input type="checkbox" value="payroll" class="accent-blue-500" /> Payroll</label>
+      </div>
+    </div>
+
+    <div class="mt-5 flex items-center gap-3">
+      <button class="neon-btn-solid neon-btn-lg" id="ob-btn" onclick="doOnboard()"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="22" x2="16" y1="11" y2="11"/></svg> Register Client</button>
+      <div id="ob-status" class="text-sm"></div>
+    </div>
+
+    <div id="ob-result" class="hidden mt-4 glass-light p-4 max-w-2xl">
+      <div class="text-green-400 font-semibold mb-2 flex items-center gap-1.5"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Client registered successfully</div>
+      <div id="ob-result-detail" class="text-slate-400 text-sm space-y-1"></div>
+    </div>
+  </section>
+
+  <!-- ── NEWSLETTER ── -->
+  <section class="panel" id="panel-newsletter">
+    <div class="flex items-center gap-3 mb-5">
+      <span class="icon-lg text-blue-400"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg></span>
+      <div>
+        <h2 class="text-white text-xl font-bold">Newsletter</h2>
+        <p class="text-slate-500 text-xs">AI-drafted personalized client emails — creates Outlook drafts for review before sending</p>
+      </div>
+    </div>
+
+    <!-- Outlook config banner -->
+    <div id="nl-config-banner" class="hidden glass-light border border-yellow-500/20 rounded-xl p-3 mb-5 flex items-center gap-3">
+      <span class="text-yellow-400"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg></span>
+      <div class="flex-1">
+        <span class="text-yellow-300 text-xs font-semibold">Outlook not configured — enter your Microsoft 365 email to create drafts</span>
+        <div class="flex gap-2 mt-2">
+          <input id="nl-from-input" class="inp text-xs flex-1" type="email" placeholder="you@yourdomain.com" />
+          <button class="neon-btn neon-btn-sm text-xs" onclick="nlSaveFrom()">Save &amp; Test</button>
+        </div>
+        <div id="nl-from-status" class="text-xs mt-1 text-slate-600"></div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="border-b border-white/10 mb-5 flex gap-1 items-center">
+      <button class="tab-btn active" id="nl-tab-crm" onclick="nlTab('crm')"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:4px"><rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg>Client CRM</button>
+      <button class="tab-btn" id="nl-tab-compose" onclick="nlTab('compose')"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:4px"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>Compose</button>
+    </div>
+
+    <!-- CRM TAB -->
+    <div id="nl-crm-tab">
+      <div class="flex items-center justify-between mb-3">
+        <p class="text-slate-500 text-xs">All clients — select any row to pre-target them in Compose</p>
+        <button class="neon-btn neon-btn-sm text-xs" onclick="nlTab('compose')"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg> Compose Newsletter <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></button>
+      </div>
+      <div class="overflow-x-auto">
+        <div class="grid text-xs text-slate-600 font-semibold uppercase tracking-wider border-b border-white/05 px-2 py-1 min-w-[700px]"
+             style="grid-template-columns:2fr 1.5fr 1.5fr 1fr 1fr 1.5fr">
+          <span>Company</span><span>Contact</span><span>Email</span><span>Type · State</span><span>Founded</span><span>Services</span>
+        </div>
+        <div id="nl-crm-rows" class="space-y-0.5 max-h-[460px] overflow-y-auto min-w-[700px]"></div>
+      </div>
+    </div>
+
+    <!-- COMPOSE TAB -->
+    <div id="nl-compose-tab" class="hidden">
+      <!-- Step progress -->
+      <div class="flex items-center gap-2 mb-6">
+        <div id="nl-pill-1" class="px-3 py-1 rounded-full text-xs font-semibold bg-blue-500/20 text-blue-300 border border-blue-500/30">1 · Compose</div>
+        <div class="nl-step-line" id="nl-line-1"></div>
+        <div id="nl-pill-2" class="px-3 py-1 rounded-full text-xs font-semibold text-slate-600 border border-white/10">2 · Preview</div>
+        <div class="nl-step-line" id="nl-line-2"></div>
+        <div id="nl-pill-3" class="px-3 py-1 rounded-full text-xs font-semibold text-slate-600 border border-white/10">3 · Drafts</div>
+      </div>
+
+      <!-- Step 1: Compose -->
+      <div id="nl-compose" class="space-y-4">
+        <!-- Demo presets -->
+        <div class="flex gap-2 mb-1">
+          <span class="text-slate-600 text-xs self-center shrink-0">Demo:</span>
+          <button onclick="nlPreset(1)"
+            class="neon-btn text-xs px-3 py-1.5 text-left flex-1">
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;flex-shrink:0"><path d="M14 2v6l3 3a7 7 0 1 1-10 0l3-3V2"/><path d="M6 7h12"/></svg> <strong>R&amp;D Q3 Tax Reminder</strong>
+            <span class="text-slate-600 block text-[10px] mt-0.5">Targets clients with R&amp;D credits → explains payroll offset</span>
+          </button>
+          <button onclick="nlPreset(2)"
+            class="neon-btn text-xs px-3 py-1.5 text-left flex-1">
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;flex-shrink:0"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg> <strong>QSBS &amp; Equity Year-End Alert</strong>
+            <span class="text-slate-600 block text-[10px] mt-0.5">Targets equity/RSU clients → QSBS 5-year holding warning</span>
+          </button>
+        </div>
+        <div>
+          <label class="text-slate-400 text-xs mb-1 block">Email Subject *</label>
+          <input id="nl-subject" class="inp" type="text" placeholder="e.g. Action Required: Q3 Estimated Tax Due September 15" />
+        </div>
+        <div>
+          <label class="text-slate-400 text-xs mb-1 block">Instructions for AI *</label>
+          <textarea id="nl-message" class="inp" rows="4"
+                    placeholder="e.g. Remind all R&D credit clients that Q3 estimated taxes are due September 15. Factor in their R&D credit from Q1 to reduce the payment. Be specific and action-oriented."></textarea>
+        </div>
+        <details class="glass-light p-3 cursor-pointer">
+          <summary class="text-slate-400 text-sm font-medium select-none flex items-center gap-1.5"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;flex-shrink:0"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> Optional Filters</summary>
+          <div class="mt-3 grid grid-cols-3 gap-3">
+            <div>
+              <label class="text-slate-500 text-xs mb-1 block">Entity Type</label>
+              <select id="nl-type" class="inp">
+                <option value="">All</option>
+                <option>C-Corp</option><option>S-Corp</option><option>LLC</option><option>Partnership</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-slate-500 text-xs mb-1 block">State</label>
+              <input id="nl-state" class="inp" type="text" placeholder="e.g. CA, DE" />
+            </div>
+            <div>
+              <label class="text-slate-500 text-xs mb-1 block">Service</label>
+              <select id="nl-service" class="inp">
+                <option value="">All</option>
+                <option value="r-and-d">R&amp;D Credits</option>
+                <option value="equity">Equity / RSUs</option>
+                <option value="crypto">Crypto</option>
+                <option value="multi-state">Multi-State</option>
+              </select>
+            </div>
+          </div>
+        </details>
+        <button class="neon-btn-solid neon-btn-lg" id="nl-analyze-btn" onclick="nlAnalyze()">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg> Analyze &amp; Preview Emails
+        </button>
+      </div>
+
+      <!-- Step 2: Preview -->
+      <div id="nl-preview" class="hidden">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-white font-semibold">
+            <span id="nl-count" class="text-blue-400"></span> Recipients Matched
+          </h3>
+          <button class="neon-btn neon-btn-sm" onclick="nlBack()"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg> Back</button>
+        </div>
+
+        <!-- Per-client email carousel -->
+        <div class="glass-light rounded-xl overflow-hidden mb-4">
+          <!-- Recipient tabs strip -->
+          <div id="nl-recipient-tabs" class="flex gap-0 overflow-x-auto border-b border-white/08"></div>
+          <!-- Active recipient header -->
+          <div class="px-4 py-3 border-b border-white/05 flex items-center justify-between">
+            <div>
+              <div class="text-white font-semibold text-sm" id="nl-preview-name"></div>
+              <div class="text-slate-600 text-xs" id="nl-preview-meta"></div>
+            </div>
+            <div class="flex items-center gap-2">
+              <label class="flex items-center gap-1.5 text-xs text-slate-400 cursor-pointer">
+                <input type="checkbox" id="nl-preview-chk" class="accent-blue-500" onchange="nlToggleRecipient()" />
+                Include
+              </label>
+              <div class="text-slate-700 text-xs" id="nl-preview-reason"></div>
+            </div>
+          </div>
+          <!-- Email body -->
+          <div id="nl-email-preview" class="p-5 text-sm text-slate-300 max-h-64 overflow-y-auto bg-black/10"></div>
+          <!-- Nav arrows -->
+          <div class="flex items-center justify-between px-4 py-2 border-t border-white/05">
+            <button class="neon-btn neon-btn-sm text-xs" onclick="nlPreviewNav(-1)"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg> Prev</button>
+            <span class="text-slate-600 text-xs" id="nl-preview-pos"></span>
+            <button class="neon-btn neon-btn-sm text-xs" onclick="nlPreviewNav(1)">Next <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></button>
+          </div>
+        </div>
+
+        <button class="neon-btn-solid neon-btn-lg w-full" id="nl-send-btn" onclick="nlDraft()">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 13.5V4a2 2 0 0 1 2-2h8.5L20 7.5V20a2 2 0 0 1-2 2h-5.5"/><polyline points="14 2 14 8 20 8"/><path d="M10.42 12.61a2.1 2.1 0 1 1 2.97 2.97L7.95 21 4 22l.99-3.95 5.43-5.44Z"/></svg> Create <span id="nl-send-count">0</span> Outlook Drafts
+        </button>
+      </div>
+
+      <!-- Step 3: Done -->
+      <div id="nl-done" class="hidden glass p-10 text-center">
+        <div class="flex justify-center text-green-400 mb-4"><svg viewBox="0 0 24 24" width="44" height="44" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 13V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h8"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/><path d="m16 19 2 2 4-4"/></svg></div>
+        <div class="text-white font-semibold text-lg mb-2">Drafts created in Outlook!</div>
+        <div id="nl-done-info" class="text-slate-400 text-sm mb-4"></div>
+        <div id="nl-draft-results" class="text-left space-y-1 mb-5 max-h-48 overflow-y-auto"></div>
+        <button class="neon-btn" onclick="nlReset()">New campaign</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── DEADLINE WATCHER ── -->
+  <section class="panel" id="panel-deadlines">
+    <div class="flex items-center justify-between mb-6">
+      <div class="flex items-center gap-3">
+        <span class="icon-lg text-blue-400"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2"/><path d="M5 3 2 6"/><path d="m22 6-3-3"/></svg></span>
+        <div>
+          <h2 class="text-white text-xl font-bold">Deadline Watcher</h2>
+          <p class="text-slate-500 text-xs">Scans all clients — 1120, 1065, 1120-S, estimated taxes, extensions</p>
+        </div>
+      </div>
+      <button class="neon-btn-solid" id="deadline-scan-btn" onclick="scanDeadlines()"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg> Scan Now</button>
+    </div>
+    <div id="deadline-empty" class="glass p-10 text-center text-slate-500 text-sm">
+      Click <strong class="text-slate-400">Scan Now</strong> to fetch upcoming deadlines across all 10 clients.
+    </div>
+    <div id="deadline-list" class="space-y-3 hidden"></div>
+  </section>
+
+  </div>
+</div>
+
+<!-- ══ SENT EMAILS DRAWER ══ -->
+<div id="email-drawer">
+  <div class="flex items-center justify-between px-5 py-4 border-b border-white/07">
+    <h2 class="text-white font-semibold">Sent Emails</h2>
+    <button class="text-slate-500 hover:text-white" onclick="closeEmailDrawer()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+  </div>
+  <div class="px-5 py-3 border-b border-white/05 flex items-center gap-2">
+    <button class="neon-btn neon-btn-sm" onclick="loadEmailLog()"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg> Refresh</button>
+    <span class="text-slate-600 text-xs">Last 50 sent — all agents</span>
+  </div>
+  <div id="email-log-list" class="flex-1 overflow-y-auto px-4 py-3 space-y-2">
+    <div class="text-slate-600 text-sm text-center pt-8">Click Refresh to load</div>
+  </div>
+</div>
+<div id="drawer-backdrop" class="hidden fixed inset-0 bg-black/40" onclick="closeEmailDrawer()" style="z-index:150"></div>
+
+<!-- ══ API STATUS MODAL ══ -->
+<div class="modal-overlay" id="status-modal">
+  <div class="modal">
+    <button class="absolute top-4 right-4 text-slate-500 hover:text-white" onclick="closeModal('status-modal')"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+    <h2 class="text-white font-bold text-lg mb-1">API Status</h2>
+    <p class="text-slate-500 text-xs mb-5">Configure credentials in the <code class="text-blue-300">.env</code> file, then restart the server.</p>
+    <div id="api-status-list" class="space-y-3">
+      <div id="api-status-flux" class="py-2"></div>
+    </div>
+    <div class="border-t border-white/10 mt-5 pt-4 flex items-center justify-between">
+      <div>
+        <label class="text-slate-400 text-xs mb-1 block">Environment</label>
+        <select id="env-label-sel" class="inp" style="width:auto;min-width:160px" onchange="saveEnv()">
+          <option value="TEST">TEST</option>
+          <option value="PRODUCTION">PRODUCTION</option>
+        </select>
+      </div>
+      <button class="neon-btn-solid" onclick="closeModal('status-modal')">Done</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-wrap"></div>
+
+<!-- ══ JAVASCRIPT ══ -->
+<script>
+const TITLES = { dashboard:'Dashboard', librarian:'Librarian', sorter:'AI Sorter', newsletter:'Newsletter', deadlines:'Deadline Watcher', onboarding:'Client Onboarding' };
+
+// ── Flux Loader ──
+// Creates an animated gradient progress bar with cycling phase labels.
+// Returns { el, complete(label), stop() }
+function fluxLoader({ phases, duration = 6 } = {}) {
+  const ph = phases || [
+    { at:0,   label:'Loading…' },
+    { at:30,  label:'Processing…' },
+    { at:65,  label:'Almost there…' },
+    { at:88,  label:'Finishing up…' },
+  ];
+  const id = 'fl-' + Math.random().toString(36).slice(2, 7);
+  const el = document.createElement('div');
+  el.className = 'flux-loader py-2';
+  el.innerHTML = `<div class="flux-label" id="${id}-lbl">${ph[0].label}</div><div class="flux-track"><div class="flux-fill" id="${id}-fill" style="width:3%"><span class="flux-sheen"></span></div></div>`;
+
+  const lbl = () => document.getElementById(`${id}-lbl`);
+  const fill = () => document.getElementById(`${id}-fill`);
+  let raf, startTs, lastLabel = '';
+
+  function tick(ts) {
+    if (!startTs) startTs = ts;
+    const pct = Math.min(96, ((ts - startTs) / (duration * 1000)) * 100);
+    const f = fill(); if (f) f.style.width = pct + '%';
+    // find active phase label
+    let active = ph[0].label;
+    for (const p of ph) { if (pct >= p.at) active = p.label; }
+    if (active !== lastLabel) {
+      lastLabel = active;
+      const l = lbl();
+      if (l) { l.style.opacity = '0'; setTimeout(() => { const ll = lbl(); if (ll) { ll.textContent = active; ll.style.opacity = '1'; } }, 180); }
+    }
+    raf = requestAnimationFrame(tick);
+  }
+  raf = requestAnimationFrame(tick);
+
+  return {
+    el,
+    complete(finalLabel = 'Done') {
+      cancelAnimationFrame(raf);
+      const f = fill(); if (f) f.style.width = '100%';
+      const l = lbl();
+      if (l) { l.style.opacity = '0'; setTimeout(() => { const ll = lbl(); if (ll) { ll.textContent = finalLabel; ll.style.opacity = '1'; } }, 180); }
+    },
+    stop() { cancelAnimationFrame(raf); el.remove(); }
+  };
+}
+
+// ── API ──
+async function api(path, payload = {}, { isFile = false } = {}) {
+  const opts = { method: 'POST' };
+  if (isFile) {
+    opts.body = payload;
+  } else {
+    opts.headers = { 'Content-Type': 'application/json' };
+    opts.body = JSON.stringify(payload);
+  }
+  const res = await fetch(path, opts);
+  if (!res.ok) {
+    const ct = res.headers.get('content-type') || '';
+    const body = ct.includes('json') ? (await res.json()) : { error: await res.text() };
+    throw new Error(body.error || `HTTP ${res.status}`);
+  }
+  const ct = res.headers.get('content-type') || '';
+  return ct.includes('json') ? res.json() : { raw: await res.text() };
+}
+
+async function apiGet(path) {
+  const res = await fetch(path);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
+// ── Toast ──
+function toast(msg, type = 'info', ms = 4000) {
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  document.getElementById('toast-wrap').appendChild(el);
+  setTimeout(() => el.remove(), ms);
+}
+
+// ── Router ──
+function nav(id) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item[data-panel]').forEach(n => n.classList.remove('active'));
+  const p = document.getElementById('panel-' + id);
+  if (p) p.classList.add('active');
+  const n = document.querySelector(`.nav-item[data-panel="${id}"]`);
+  if (n) n.classList.add('active');
+  document.getElementById('topbar-title').textContent = TITLES[id] || id;
+  if (id === 'sorter') { loadCRM(); loadDemoFiles(); }
+  if (id === 'newsletter') { loadNlCRM(); nlCheckConfig(); }
+}
+document.querySelectorAll('.nav-item[data-panel]').forEach(el =>
+  el.addEventListener('click', () => nav(el.dataset.panel))
+);
+
+// ── Env pill ──
+function updateEnvPill() {
+  const env = localStorage.getItem('cc_env') || 'TEST';
+  const pill = document.getElementById('env-pill');
+  pill.textContent = env;
+  pill.className = env === 'PRODUCTION'
+    ? 'text-xs px-3 py-1 rounded-full border border-green-500/30 text-green-400 bg-green-500/10'
+    : 'text-xs px-3 py-1 rounded-full border border-yellow-500/30 text-yellow-400 bg-yellow-500/10';
+  const sel = document.getElementById('env-label-sel');
+  if (sel) sel.value = env;
+}
+function saveEnv() {
+  localStorage.setItem('cc_env', document.getElementById('env-label-sel').value);
+  updateEnvPill();
+}
+
+// ── Modal ──
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+  if (id === 'status-modal') loadApiStatus();
+}
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+async function loadApiStatus() {
+  const el = document.getElementById('api-status-list');
+  const apiFlux = fluxLoader({ phases:[{at:0,label:'Checking services…'},{at:60,label:'Verifying connections…'}], duration:3 });
+  const fluxWrap = document.getElementById('api-status-flux');
+  if (fluxWrap) fluxWrap.appendChild(apiFlux.el);
+  try {
+    const data = await apiGet('/api/health');
+    apiFlux.stop();
+    const s = data.services || {};
+    const rows = [
+      { key: 'openrouter', label: 'OpenRouter (AI Brain)', note: 'Required' },
+      { key: 'openai',     label: 'OpenAI (Embeddings)',   note: 'Required for Librarian RAG' },
+      { key: 'pinecone',   label: 'Pinecone (Vector DB)',  note: 'Required for Librarian RAG' },
+      { key: 'outlook',    label: 'Outlook (Email Send)',  note: 'Optional — emails logged to console if missing' },
+    ];
+    el.innerHTML = rows.map(r => `
+      <div class="glass-light p-3 flex items-center gap-3">
+        <div class="w-2 h-2 rounded-full flex-shrink-0 ${s[r.key] ? 'bg-green-500' : 'bg-red-500'}"></div>
+        <div class="flex-1">
+          <div class="text-white text-sm font-medium">${esc(r.label)}</div>
+          <div class="text-slate-600 text-xs">${esc(r.note)}</div>
+        </div>
+        <div class="text-xs ${s[r.key] ? 'text-green-400' : 'text-red-400'}">${s[r.key] ? '✓ Connected' : '✗ Not set'}</div>
+      </div>
+    `).join('');
+    const dot = document.getElementById('dot-librarian');
+    if (dot) dot.className = 'status-dot ' + (s.pinecone && s.openai ? 'ok' : 'bad');
+  } catch (e) {
+    apiFlux.stop();
+    el.innerHTML = `<div class="text-red-400 text-sm">Could not reach server: ${esc(e.message)}</div>`;
+  }
+}
+
+async function checkHealth() {
+  try {
+    const data = await apiGet('/api/health');
+    const ok = Object.values(data.services).filter(Boolean).length;
+    toast(`${ok}/${Object.keys(data.services).length} services connected`, 'info');
+  } catch (e) { toast('Server not reachable: ' + e.message, 'err'); }
+}
+
+// ── Email Drawer ──
+function openEmailDrawer() {
+  document.getElementById('email-drawer').classList.add('open');
+  document.getElementById('drawer-backdrop').classList.remove('hidden');
+}
+function closeEmailDrawer() {
+  document.getElementById('email-drawer').classList.remove('open');
+  document.getElementById('drawer-backdrop').classList.add('hidden');
+}
+
+async function loadEmailLog() {
+  const list = document.getElementById('email-log-list');
+  list.innerHTML = '';
+  const emailFlux = fluxLoader({ phases:[{at:0,label:'Loading emails…'},{at:50,label:'Fetching log…'},{at:80,label:'Almost ready…'}], duration:4 });
+  list.appendChild(emailFlux.el);
+  try {
+    const data = await apiGet('/api/emails');
+    emailFlux.stop();
+    const rows = data.rows || [];
+    if (!rows.length) { list.innerHTML = '<div class="text-slate-600 text-sm text-center pt-8">No emails logged yet.</div>'; return; }
+    list.innerHTML = rows.map(r => `
+      <div class="glass-light p-3 cursor-pointer hover:border-blue-500/20 transition-all"
+           onclick="this.querySelector('.ep').classList.toggle('hidden')">
+        <div class="flex justify-between items-start mb-1">
+          <span class="text-white text-xs font-medium truncate max-w-[220px]">${esc(r.subject || '—')}</span>
+          <span class="text-slate-600 text-xs ml-2 whitespace-nowrap">${fmtTime(r.ts)}</span>
+        </div>
+        <div class="text-slate-500 text-xs">To: ${esc(r.to || '—')} · ${esc(r.agent || '')}</div>
+        <div class="ep hidden mt-2 pt-2 border-t border-white/07 text-xs text-slate-400">${r.html || '(no body)'}</div>
+      </div>
+    `).join('');
+    const today = new Date().toDateString();
+    const todayN = rows.filter(r => { try { return new Date(r.ts).toDateString() === today; } catch { return false; } }).length;
+    document.getElementById('dash-emails').textContent = todayN;
+  } catch (e) {
+    emailFlux.stop();
+    list.innerHTML = `<div class="text-red-400 text-sm text-center pt-8">${esc(e.message)}</div>`;
+  }
+}
+
+// ── LIBRARIAN ──
+let sessionId = 'sess-' + Math.random().toString(36).slice(2, 9);
+let conversationHistory = []; // [{role:'user'|'assistant', content:'...'}]
+
+function libTab(t) {
+  document.getElementById('lib-ask-tab').classList.toggle('hidden', t !== 'ask');
+  document.getElementById('lib-teach-tab').classList.toggle('hidden', t !== 'teach');
+  document.querySelectorAll('#panel-librarian .tab-btn').forEach((b, i) => {
+    b.classList.toggle('active', (i === 0 && t === 'ask') || (i === 1 && t === 'teach'));
+  });
+}
+
+function addBubble(text, role) {
+  const msgs = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = role === 'user' ? 'bubble-user' : 'bubble-bot';
+  div.innerHTML = role === 'bot' ? marked.parse(text) : esc(text);
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+  return div;
+}
+
+function addBubbleWithSources(text, sources) {
+  const msgs = document.getElementById('chat-messages');
+  const wrap = document.createElement('div');
+  wrap.className = 'flex flex-col gap-1';
+
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble-bot';
+  bubble.innerHTML = marked.parse(text);
+  wrap.appendChild(bubble);
+
+  if (sources && sources.length > 0) {
+    const panel = document.createElement('div');
+    panel.className = 'sources-panel';
+    panel.innerHTML = `<div class="sources-panel-title">Sources</div>` +
+      sources.map((s, i) => `
+        <div class="source-item">
+          <div class="source-header">
+            <span class="source-num">[${i + 1}]</span>
+            <span class="source-loc">${esc(s.source)}${s.page ? ` · page ${s.page}` : ''}</span>
+            <span class="source-score">${Math.round((s.score || 0) * 100)}% match</span>
+          </div>
+          <div class="source-excerpt">"${esc(s.text.slice(0, 180))}${s.text.length > 180 ? '…' : ''}"</div>
+        </div>`).join('');
+    wrap.appendChild(panel);
+  }
+
+  msgs.appendChild(wrap);
+  msgs.scrollTop = msgs.scrollHeight;
+  return wrap;
+}
+
+const LIB_PHASES = [
+  'Searching knowledge base…',
+  'Found relevant chunks…',
+  'Reading IRS guidance…',
+  'Cross-referencing client notes…',
+  'Structuring the answer…',
+  'Generating response…',
+];
+
+async function sendChat() {
+  const input = document.getElementById('chat-input');
+  const q = input.value.trim();
+  if (!q) return;
+  input.value = '';
+  addBubble(q, 'user');
+  const btn = document.getElementById('chat-send-btn');
+  btn.disabled = true; btn.innerHTML = '<span class="spin"></span>';
+
+  // Typing bubble with flux bar + cycling phrases
+  const typing = addBubble('', 'bot');
+  typing.style.minWidth = '260px';
+  const libFlux = fluxLoader({
+    phases: LIB_PHASES.map((label, i) => ({ at: Math.round(i * (90 / (LIB_PHASES.length - 1))), label })),
+    duration: 14
+  });
+  typing.appendChild(libFlux.el);
+
+  try {
+    const data = await api('/api/librarian/ask', { question: q, history: conversationHistory.slice(-10), sessionId });
+    libFlux.complete('Answer ready');
+    await new Promise(r => setTimeout(r, 320));
+    typing.remove();
+    addBubbleWithSources(data.answer || '(no answer returned)', data.sources);
+    conversationHistory.push({ role: 'user', content: q });
+    conversationHistory.push({ role: 'assistant', content: data.answer || '' });
+    addActivityLocal(`Librarian: "${q.slice(0, 50)}…"`);
+  } catch (e) {
+    libFlux.stop();
+    typing.remove();
+    addBubble(`Error: ${e.message}`, 'bot');
+    toast(e.message, 'err');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Send';
+  }
+}
+
+function newChat() {
+  conversationHistory = [];
+  sessionId = 'sess-' + Math.random().toString(36).slice(2, 9);
+  const msgs = document.getElementById('chat-messages');
+  msgs.innerHTML = '<div class="bubble-bot">Hello! I can answer questions about US tax law, IRS deadlines, R&amp;D credits, equity taxation, and client-specific notes. What would you like to know?</div>';
+  document.getElementById('chat-input').value = '';
+  toast('New conversation started', 'info');
+}
+
+function quickAsk(q) {
+  document.getElementById('chat-input').value = q;
+  sendChat();
+}
+
+async function doTeach() {
+  const text = document.getElementById('teach-text').value.trim();
+  if (!text) { toast('Enter content to remember.', 'err'); return; }
+  const client   = document.getElementById('teach-client').value.trim();
+  const category = document.getElementById('teach-category').value;
+  const btn = document.getElementById('teach-btn');
+  btn.disabled = true; btn.innerHTML = '<span class="spin"></span> Saving…';
+  try {
+    const data = await api('/api/librarian/teach', { text, client, category, namespace: 'client-memory' });
+    const res = document.getElementById('teach-result');
+    res.classList.remove('hidden');
+    res.textContent = `Saved to Pinecone!${data.id ? ' (id: ' + data.id + ')' : ''}`;
+    document.getElementById('teach-text').value = '';
+    toast('Fact saved to Librarian memory!', 'ok');
+    addActivityLocal('Librarian: fact taught' + (client ? ` — ${client}` : ''));
+  } catch (e) { toast(e.message, 'err'); }
+  finally { btn.disabled = false; btn.innerHTML = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:4px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg> Remember this'; }
+}
+
+// ── INGEST ──
+let _ingestFile = null;
+
+function onIngestFileSelect(file) {
+  if (!file) return;
+  _ingestFile = file;
+  document.getElementById('ingest-file-name').textContent = file.name;
+  document.getElementById('ingest-file-size').textContent = (file.size / 1024).toFixed(1) + ' KB';
+  document.getElementById('ingest-file-preview').classList.remove('hidden');
+  document.getElementById('ingest-dropzone').classList.add('hidden');
+  document.getElementById('ingest-btn').disabled = false;
+  document.getElementById('ingest-result').classList.add('hidden');
+  document.getElementById('ingest-progress').classList.add('hidden');
+}
+
+function clearIngestFile() {
+  _ingestFile = null;
+  document.getElementById('ingest-file-input').value = '';
+  document.getElementById('ingest-file-preview').classList.add('hidden');
+  document.getElementById('ingest-dropzone').classList.remove('hidden');
+  document.getElementById('ingest-btn').disabled = true;
+  document.getElementById('ingest-result').classList.add('hidden');
+  document.getElementById('ingest-progress').classList.add('hidden');
+}
+
+async function doIngest() {
+  if (!_ingestFile) return;
+  const btn = document.getElementById('ingest-btn');
+  const statusEl = document.getElementById('ingest-status');
+  const fillEl = document.getElementById('ingest-fill');
+  const progressEl = document.getElementById('ingest-progress');
+  const resultEl = document.getElementById('ingest-result');
+  const namespace = document.getElementById('ingest-namespace').value;
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span> Ingesting…';
+
+  resultEl.classList.add('hidden');
+  progressEl.classList.remove('hidden');
+
+  // Animated status messages while server processes
+  const phases = [
+    [0,  'Extracting text from document…'],
+    [20, 'Chunking into segments…'],
+    [45, 'Creating embeddings with OpenAI…'],
+    [75, 'Indexing vectors to Pinecone…'],
+    [92, 'Finalizing…'],
+  ];
+  let phaseIdx = 0;
+  const tick = setInterval(() => {
+    if (phaseIdx < phases.length) {
+      const [pct, msg] = phases[phaseIdx++];
+      statusEl.textContent = msg;
+      fillEl.style.width = pct + '%';
+    }
+  }, 1800);
+
+  try {
+    const fd = new FormData();
+    fd.append('document', _ingestFile, _ingestFile.name);
+    fd.append('namespace', namespace);
+    const data = await api('/api/librarian/ingest', fd, { isFile: true });
+
+    clearInterval(tick);
+    fillEl.style.width = '100%';
+    statusEl.textContent = '';
+    resultEl.classList.remove('hidden');
+    resultEl.innerHTML = `✅ Ingested <strong>${data.chunks}</strong> chunks from <strong>${esc(data.source)}</strong> (${data.pages} page${data.pages !== 1 ? 's' : ''}) → namespace: <code class="text-purple-400">${esc(namespace)}</code>`;
+    toast(`Ingested ${data.chunks} chunks — Librarian ready!`, 'ok');
+    addActivityLocal(`Librarian: ingested ${_ingestFile.name} (${data.chunks} chunks)`);
+
+    // Auto-switch to Ask tab after 1.5s
+    setTimeout(() => { libTab('ask'); toast('Switch to Ask to query your document', 'info'); }, 1500);
+
+  } catch (e) {
+    clearInterval(tick);
+    progressEl.classList.add('hidden');
+    toast(e.message, 'err');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:4px"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/></svg> Ingest to Knowledge Base';
+  }
+}
+
+// Drag-and-drop for ingest zone
+(function() {
+  const dz = document.getElementById('ingest-dropzone');
+  if (!dz) return;
+  dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('dragover'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
+  dz.addEventListener('drop', e => {
+    e.preventDefault(); dz.classList.remove('dragover');
+    const f = e.dataTransfer.files[0];
+    if (f) onIngestFileSelect(f);
+  });
+})();
+
+// ── AI SORTER ──
+const sortDz = document.getElementById('sort-dropzone');
+sortDz.addEventListener('dragover', e => { e.preventDefault(); sortDz.classList.add('dragover'); });
+sortDz.addEventListener('dragleave', () => sortDz.classList.remove('dragover'));
+sortDz.addEventListener('drop', e => { e.preventDefault(); sortDz.classList.remove('dragover'); handleSortFiles(e.dataTransfer.files); });
+
+async function handleSortFiles(files) {
+  for (const file of Array.from(files)) {
+    const row = addSortRow(file.name);
+    const fd = new FormData();
+    fd.append('data', file, file.name);
+    try {
+      const data = await api('/api/sorter/upload', fd, { isFile: true });
+      setSortRow(row, file.name, data);
+      addActivityLocal(`Sorter: "${file.name}" → ${data.destination}`);
+    } catch (e) { setSortRow(row, file.name, null, e.message); }
+  }
+}
+
+function addSortRow(name) {
+  const row = document.createElement('div');
+  row.className = 'glass-light p-4 flex items-center gap-3';
+  row.innerHTML = `<span class="text-slate-300 text-sm truncate flex-1">${esc(name)}</span><span class="spin"></span>`;
+  document.getElementById('sort-rows').prepend(row);
+  return row;
+}
+
+function setSortRow(row, name, data, errMsg) {
+  if (errMsg) {
+    row.innerHTML = `<div class="flex items-center gap-2"><span class="text-red-400 text-xs">❌</span><span class="text-slate-300 text-sm">${esc(name)}</span><span class="text-red-400 text-xs ml-2">${esc(errMsg)}</span></div>`;
+    return;
+  }
+  const confClass = data.confidence === 'high' ? 'conf-high' : data.confidence === 'medium' ? 'conf-medium' : 'conf-low';
+  const parts = (data.destination || '').replace(/\/$/, '').split('/');
+  const breadcrumb = parts.map(p => `<span>${esc(p)}</span>`).join('<span class="text-slate-700 mx-1">/</span>');
+  row.className = 'glass-light p-4';
+  row.innerHTML = `
+    <div class="flex items-start gap-3">
+      <span class="text-blue-400/70 mt-0.5"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg></span>
+      <div class="flex-1 min-w-0">
+        <div class="flex items-center gap-2 mb-2 flex-wrap">
+          <span class="text-white text-sm font-semibold">${esc(name)}</span>
+          <span class="text-xs px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-300 border border-blue-500/20 font-medium">${esc(data.docType)}</span>
+          <span class="badge badge-${data.confidence === 'high' ? 'low' : data.confidence === 'medium' ? 'medium' : 'high'} text-xs">${esc(data.confidence)}</span>
+        </div>
+        <div class="flex items-center gap-4 text-xs text-slate-500 mb-2">
+          <span><span class="text-slate-500">Client:</span> <span class="text-slate-300 font-medium">${esc(data.client)}</span></span>
+          <span><span class="text-slate-500">Year:</span> <span class="text-slate-300">${data.taxYear || '—'}</span></span>
+        </div>
+        ${data.fromPath ? `<div class="text-xs text-slate-600 mb-1 font-mono"><span class="text-red-400/70 line-through">${esc(data.fromPath)}</span></div>` : ''}
+        <div class="text-xs text-slate-600 mb-1">
+          <span class="text-slate-700 mr-1">→ Moved to:</span>${breadcrumb}
+        </div>
+        ${data.savedTo ? `<div class="text-xs text-green-700 font-mono mb-1">data/sorted/${esc(data.savedTo)}</div>` : ''}
+        ${data.notes ? `<div class="mt-2 px-3 py-2 bg-white/03 border border-white/06 rounded-lg text-xs text-slate-500 italic"><span class="text-slate-600 not-italic font-semibold">AI reasoning: </span>${esc(data.notes)}</div>` : ''}
+      </div>
+    </div>
+  `;
+}
+
+// ── SORTER TABS / CRM / DEMO FILES ──
+function sortTab(t) {
+  document.getElementById('sort-crm-tab').classList.toggle('hidden', t !== 'crm');
+  document.getElementById('sort-sort-tab').classList.toggle('hidden', t !== 'sort');
+  document.querySelectorAll('#panel-sorter .tab-btn').forEach((b, i) => {
+    b.classList.toggle('active', (i === 0 && t === 'crm') || (i === 1 && t === 'sort'));
+  });
+}
+
+const SVC_LABELS = { 'corporate-tax':'Corp Tax', 'r-and-d':'R&D', 'equity':'Equity', 'multi-state':'Multi-St', 'crypto':'Crypto', 'payroll':'Payroll' };
+
+async function loadCRM() {
+  try {
+    const clients = await apiGet('/api/clients');
+    const container = document.getElementById('crm-rows');
+    container.innerHTML = clients.map(c => `
+      <div class="grid grid-cols-12 gap-2 px-3 py-2 rounded-lg hover:bg-white/03 transition-colors text-xs items-center">
+        <div class="col-span-4">
+          <div class="text-white font-medium">${esc(c.name)}</div>
+          <div class="text-slate-600">${esc(c.contactName || '')} · ${esc(c.email || '')}</div>
+        </div>
+        <div class="col-span-2 text-slate-400">${esc(c.type)} · <span class="text-slate-500">${esc(c.state)}</span></div>
+        <div class="col-span-2 text-slate-500 font-mono">${esc(c.ein)}</div>
+        <div class="col-span-2 text-slate-500">${esc(c.contactName || '—')}</div>
+        <div class="col-span-2 flex flex-wrap gap-1">
+          ${(c.services || []).map(s => `<span class="px-1.5 py-0.5 rounded text-slate-400 bg-white/05 border border-white/08">${SVC_LABELS[s] || s}</span>`).join('')}
+        </div>
+      </div>
+    `).join('');
+  } catch {}
+}
+
+async function loadDemoFiles() {
+  try {
+    const files = await apiGet('/api/demo-files');
+    const container = document.getElementById('demo-file-chips');
+    if (!files.length) {
+      container.innerHTML = `<p class="text-xs text-slate-600 italic">Inbox is empty — click Reset Demo to restore files.</p>`;
+      return;
+    }
+    const docTypeLabels = { 'W2':'W-2', '1099':'1099', 'K1':'K-1', 'Bank':'Bank', 'RD':'R&D' };
+    container.innerHTML = files.map(f => {
+      const typeKey = Object.keys(docTypeLabels).find(k => f.name.includes(k)) || '';
+      const typeTag = typeKey ? `<span class="text-[10px] text-slate-500 bg-white/05 px-1 rounded">${docTypeLabels[typeKey]}</span>` : '';
+      const label = f.name.replace(/_/g,' ').replace('.pdf','').replace('.txt','');
+      return `<button onclick="sortDemoFile('${esc(f.name)}')" id="chip-${esc(f.name)}"
+        class="neon-btn text-xs flex flex-col items-start gap-0.5 px-3 py-2 text-left"
+        title="Location: ${esc(f.inboxPath)}">
+        <span class="flex items-center gap-1.5">${typeTag}<strong>${esc(label)}</strong></span>
+        <span class="text-slate-600 font-mono text-[10px]">${esc(f.inboxPath)}</span>
+      </button>`;
+    }).join('');
+  } catch {}
+}
+
+async function sortDemoFile(filename) {
+  sortTab('sort');
+  // disable the chip immediately
+  const chip = document.getElementById('chip-' + filename);
+  if (chip) { chip.disabled = true; chip.style.opacity = '0.4'; }
+  const row = addSortRow(filename);
+  try {
+    const data = await api('/api/sorter/sort-demo', { filename });
+    setSortRow(row, filename, data);
+    addActivityLocal(`Sorter: "${filename}" → ${data.destination}`);
+    // remove chip — file is gone from inbox
+    if (chip) chip.remove();
+  } catch (e) {
+    setSortRow(row, filename, null, e.message);
+    if (chip) { chip.disabled = false; chip.style.opacity = '1'; }
+  }
+}
+
+async function resetInbox() {
+  try {
+    const data = await api('/api/demo/reset', {});
+    toast(`✅ Inbox restored — ${data.restored} files reset`, 'ok');
+    loadDemoFiles();
+  } catch (e) { toast('Reset failed: ' + e.message, 'err'); }
+}
+
+
+
+// ── CLIENT ONBOARDING ──
+async function doOnboard() {
+  const name    = document.getElementById('ob-name').value.trim();
+  const ein     = document.getElementById('ob-ein').value.trim();
+  const type    = document.getElementById('ob-type').value;
+  const state   = document.getElementById('ob-state').value.trim().toUpperCase();
+  const contact = document.getElementById('ob-contact').value.trim();
+  const email   = document.getElementById('ob-email').value.trim();
+  const services = [...document.querySelectorAll('#ob-services input:checked')].map(i => i.value);
+
+  if (!name || !ein) { toast('Company name and EIN are required.', 'err'); return; }
+
+  const btn = document.getElementById('ob-btn');
+  const status = document.getElementById('ob-status');
+  btn.disabled = true; btn.innerHTML = '<span class="spin"></span> Registering…';
+
+  status.textContent = '';
+
+  try {
+    const data = await api('/api/clients/add', { name, ein, type, state, contactName: contact, email, services });
+    const c = data.client;
+    document.getElementById('ob-result-detail').innerHTML = `
+      <div><strong class="text-white">${esc(c.name)}</strong> — ${esc(c.type)} incorporated in ${esc(c.state)}</div>
+      <div>EIN: <code class="text-blue-300">${esc(c.ein)}</code></div>
+      <div>Contact: ${esc(c.contactName || '—')} &lt;${esc(c.email || '—')}&gt;</div>
+      <div>Services: ${(c.services || []).join(', ')}</div>
+      <div class="text-green-700 mt-2">Local folder created: data/sorted/${esc(c.name)}/</div>
+    `;
+    document.getElementById('ob-result').classList.remove('hidden');
+    toast(`"${c.name}" registered!`, 'ok');
+    addActivityLocal(`Onboarding: ${c.name} added`);
+    // clear form
+    ['ob-name','ob-ein','ob-state','ob-contact','ob-email'].forEach(id => { document.getElementById(id).value = ''; });
+    document.getElementById('ob-type').selectedIndex = 0;
+    document.querySelectorAll('#ob-services input').forEach(i => { i.checked = i.value === 'corporate-tax'; });
+  } catch (e) {
+    status.className = 'text-red-400 text-sm';
+    status.textContent = '⚠️ ' + e.message;
+  } finally {
+    btn.disabled = false; btn.innerHTML = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:4px"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="22" x2="16" y1="11" y2="11"/></svg> Register Client';
+  }
+}
+
+// ── NEWSLETTER ──
+let nlClients = [];
+let nlFromEmail = '';
+
+// ── Newsletter CRM ──
+async function loadNlCRM() {
+  try {
+    const clients = await apiGet('/api/clients');
+    const SVC = { 'corporate-tax':'Corp Tax','r-and-d':'R&D','equity':'Equity','crypto':'Crypto','multi-state':'Multi-State' };
+    document.getElementById('nl-crm-rows').innerHTML = clients.map((c, i) => `
+      <div class="grid px-2 py-2 rounded hover:bg-white/03 cursor-pointer text-xs items-center border-b border-white/03"
+           style="grid-template-columns:2fr 1.5fr 1.5fr 1fr 1fr 1.5fr"
+           onclick="nlPreSelectClient(${i})" title="Click to pre-target in Compose">
+        <div class="text-white font-medium truncate">${esc(c.name)}</div>
+        <div class="text-slate-400 truncate">${esc(c.contactName || '—')}</div>
+        <div class="text-slate-500 font-mono truncate text-[11px]">${esc(c.email || '—')}</div>
+        <div class="text-slate-500">${esc(c.type)} · ${esc(c.state)}</div>
+        <div class="text-slate-600">${c.founded || '—'}</div>
+        <div class="flex flex-wrap gap-1">${(c.services||[]).slice(0,3).map(s=>`<span class="px-1 py-0.5 rounded bg-white/05 text-slate-500">${SVC[s]||s}</span>`).join('')}</div>
+      </div>
+    `).join('');
+  } catch (e) { console.error(e); }
+}
+
+function nlPreSelectClient(idx) {
+  nlTab('compose');
+}
+
+// ── Outlook config ──
+async function nlCheckConfig() {
+  const banner = document.getElementById('nl-config-banner');
+  try {
+    const h = await apiGet('/api/health');
+    if (!h.services?.outlook) { banner.classList.remove('hidden'); }
+    else { banner.classList.add('hidden'); }
+  } catch {}
+}
+
+async function nlSaveFrom() {
+  const email = document.getElementById('nl-from-input').value.trim();
+  if (!email) return;
+  const status = document.getElementById('nl-from-status');
+  status.textContent = 'Testing connection…'; status.className = 'text-xs mt-1 text-slate-500';
+  try {
+    await api('/api/newsletter/set-from', { fromEmail: email });
+    const test = await api('/api/newsletter/test-connection', { fromEmail: email });
+    if (test.ok) {
+      nlFromEmail = email;
+      status.textContent = '✅ Connected — Outlook drafts enabled';
+      status.className = 'text-xs mt-1 text-green-500';
+      setTimeout(() => document.getElementById('nl-config-banner').classList.add('hidden'), 2000);
+    } else {
+      status.textContent = '❌ ' + test.error;
+      status.className = 'text-xs mt-1 text-red-400';
+    }
+  } catch (e) {
+    status.textContent = '❌ ' + e.message;
+    status.className = 'text-xs mt-1 text-red-400';
+  }
+}
+
+// ── Tab switcher ──
+function nlTab(t) {
+  document.getElementById('nl-crm-tab').classList.toggle('hidden', t !== 'crm');
+  document.getElementById('nl-compose-tab').classList.toggle('hidden', t !== 'compose');
+  document.getElementById('nl-tab-crm').classList.toggle('active', t === 'crm');
+  document.getElementById('nl-tab-compose').classList.toggle('active', t === 'compose');
+}
+
+// ── Compose ──
+async function nlAnalyze() {
+  const subject = document.getElementById('nl-subject').value.trim();
+  const message = document.getElementById('nl-message').value.trim();
+  if (!subject || !message) { toast('Subject and message are required.', 'err'); return; }
+  const btn = document.getElementById('nl-analyze-btn');
+  btn.disabled = true; btn.innerHTML = '<span class="spin"></span> Analyzing…';
+  const analyzeFlux = fluxLoader({
+    phases: [
+      { at:0,  label:'Analyzing client profiles…' },
+      { at:20, label:'Matching filter criteria…' },
+      { at:42, label:'Drafting personalized emails…' },
+      { at:65, label:'Reviewing email quality…' },
+      { at:84, label:'Finalizing content…' },
+    ],
+    duration: 18
+  });
+  const composeEl = document.getElementById('nl-compose');
+  composeEl.appendChild(analyzeFlux.el);
+  try {
+    const data = await api('/api/newsletter/analyze', {
+      subject, message,
+      filters: {
+        clientType: document.getElementById('nl-type').value,
+        state:      document.getElementById('nl-state').value,
+        service:    document.getElementById('nl-service').value,
+      }
+    });
+    analyzeFlux.complete('Emails ready');
+    await new Promise(r => setTimeout(r, 400));
+    analyzeFlux.stop();
+    nlClients = data.clients || [];
+    nlClients.forEach(c => { c._included = true; });
+    document.getElementById('nl-count').textContent = nlClients.length;
+    document.getElementById('nl-compose').classList.add('hidden');
+    document.getElementById('nl-preview').classList.remove('hidden');
+    // build recipient tabs
+    const tabs = document.getElementById('nl-recipient-tabs');
+    tabs.innerHTML = nlClients.map((c, i) => `
+      <button id="nl-tab-${i}" onclick="nlShowEmail(${i})"
+        class="px-3 py-2 text-xs whitespace-nowrap border-r border-white/05 transition-colors ${i===0?'bg-white/06 text-white':'text-slate-500 hover:text-white hover:bg-white/04'}">
+        ${esc(c.name.split(' ')[0])}
+      </button>`).join('');
+    nlShowEmail(0);
+    updateNlCount();
+    nlPill(2);
+    addActivityLocal(`Newsletter: ${nlClients.length} recipients matched`);
+  } catch (e) { analyzeFlux.stop(); toast(e.message, 'err'); }
+  finally { btn.disabled = false; btn.innerHTML = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:4px"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg> Analyze &amp; Preview Emails'; }
+}
+
+let nlCurrentIdx = 0;
+
+function nlShowEmail(i) {
+  nlCurrentIdx = i;
+  const c = nlClients[i];
+  if (!c) return;
+  // update tabs
+  document.querySelectorAll('#nl-recipient-tabs button').forEach((b, j) => {
+    b.className = `px-3 py-2 text-xs whitespace-nowrap border-r border-white/05 transition-colors ${j===i?'bg-white/06 text-white':'text-slate-500 hover:text-white hover:bg-white/04'}`;
+  });
+  document.getElementById('nl-preview-name').textContent = c.name;
+  document.getElementById('nl-preview-meta').textContent = `${c.type} · ${c.state} · ${c.email || 'no email'}`;
+  document.getElementById('nl-preview-reason').textContent = c.matchReason ? `Why: ${c.matchReason}` : '';
+  document.getElementById('nl-preview-chk').checked = c._included !== false;
+  document.getElementById('nl-email-preview').innerHTML = c.html || '<em class="text-slate-600">No email generated</em>';
+  document.getElementById('nl-preview-pos').textContent = `${i + 1} of ${nlClients.length}`;
+  updateNlCount();
+}
+
+function nlPreviewNav(dir) {
+  const next = (nlCurrentIdx + dir + nlClients.length) % nlClients.length;
+  nlShowEmail(next);
+}
+
+function nlToggleRecipient() {
+  if (nlClients[nlCurrentIdx]) {
+    nlClients[nlCurrentIdx]._included = document.getElementById('nl-preview-chk').checked;
+    updateNlCount();
+  }
+}
+
+function updateNlCount() {
+  const n = nlClients.filter(c => c._included !== false).length;
+  document.getElementById('nl-send-count').textContent = n;
+}
+
+function nlBack() {
+  document.getElementById('nl-compose').classList.remove('hidden');
+  document.getElementById('nl-preview').classList.add('hidden');
+  nlPill(1);
+}
+
+async function nlDraft() {
+  const recipients = nlClients.filter(c => c._included !== false && c.email);
+  if (!recipients.length) { toast('No recipients with email selected.', 'err'); return; }
+  const btn = document.getElementById('nl-send-btn');
+  btn.disabled = true; btn.innerHTML = '<span class="spin"></span> Creating drafts…';
+  const draftFlux = fluxLoader({
+    phases: [
+      { at:0,  label:'Connecting to Outlook…' },
+      { at:25, label:'Authenticating…' },
+      { at:48, label:'Creating draft emails…' },
+      { at:75, label:'Saving to Drafts folder…' },
+      { at:90, label:'Wrapping up…' },
+    ],
+    duration: 12
+  });
+  document.getElementById('nl-preview').appendChild(draftFlux.el);
+  try {
+    const data = await api('/api/newsletter/draft', {
+      subject: document.getElementById('nl-subject').value,
+      recipients,
+      fromEmail: nlFromEmail || document.getElementById('nl-from-input')?.value || '',
+    });
+    draftFlux.complete('Drafts saved');
+    await new Promise(r => setTimeout(r, 500));
+    draftFlux.stop();
+    document.getElementById('nl-preview').classList.add('hidden');
+    document.getElementById('nl-done').classList.remove('hidden');
+    document.getElementById('nl-done-info').textContent =
+      `${data.ok} draft${data.ok !== 1 ? 's' : ''} saved to Outlook Drafts folder.${data.failed ? ` ${data.failed} failed.` : ''}`;
+    document.getElementById('nl-draft-results').innerHTML = (data.results || []).map(r =>
+      r.ok
+        ? `<div class="text-xs text-green-700">✅ ${esc(r.email)}${r.webLink ? ` — <a href="${r.webLink}" target="_blank" class="text-blue-400 underline">Open draft</a>` : ''}</div>`
+        : `<div class="text-xs text-red-500">❌ ${esc(r.email)} — ${esc(r.error)}</div>`
+    ).join('');
+    nlPill(3);
+    addActivityLocal(`Newsletter: ${data.ok} Outlook drafts created`);
+    toast(`${data.ok} drafts created!`, 'ok');
+  } catch (e) {
+    draftFlux.stop();
+    toast(e.message, 'err');
+    btn.disabled = false;
+    btn.innerHTML = `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:4px"><path d="M4 13.5V4a2 2 0 0 1 2-2h8.5L20 7.5V20a2 2 0 0 1-2 2h-5.5"/><polyline points="14 2 14 8 20 8"/><path d="M10.42 12.61a2.1 2.1 0 1 1 2.97 2.97L7.95 21 4 22l.99-3.95 5.43-5.44Z"/></svg> Create <span id="nl-send-count">${recipients.length}</span> Outlook Drafts`;
+    updateNlCount();
+  }
+}
+
+function nlReset() {
+  document.getElementById('nl-compose').classList.remove('hidden');
+  document.getElementById('nl-preview').classList.add('hidden');
+  document.getElementById('nl-done').classList.add('hidden');
+  ['nl-subject', 'nl-message'].forEach(id => document.getElementById(id).value = '');
+  nlPill(1);
+}
+
+function nlPill(step) {
+  const act = 'bg-blue-500/20 text-blue-300 border-blue-500/30';
+  const idle = 'text-slate-600 border-white/10';
+  [1, 2, 3].forEach(s => {
+    const p = document.getElementById(`nl-pill-${s}`);
+    p.className = `px-3 py-1 rounded-full text-xs font-semibold border transition-all duration-300 ${s <= step ? act : idle}`;
+  });
+  const l1 = document.getElementById('nl-line-1');
+  const l2 = document.getElementById('nl-line-2');
+  if (l1) l1.classList.toggle('filled', step >= 2);
+  if (l2) l2.classList.toggle('filled', step >= 3);
+}
+
+const NL_PRESETS = [
+  {
+    subject: 'Action Required: Q3 Estimated Tax Due Sep 15 — Your R&D Credits Can Offset This',
+    message: 'Remind all R&D credit clients that Q3 estimated taxes are due September 15. Mention that their R&D payroll tax offset (up to $500,000/year under IRC §41) can directly reduce what they owe this quarter. Be specific and action-oriented. Include a call-to-action to schedule a review call.',
+    service: 'r-and-d',
+    type: '',
+    state: '',
+  },
+  {
+    subject: 'QSBS & RSU Year-End Planning — Act Before December 31',
+    message: 'Alert all clients with equity or RSU grants about year-end planning opportunities. Specifically: (1) QSBS §1202 — confirm they have held stock more than 5 years to qualify for the exclusion; (2) RSUs vesting before year-end create ordinary income — coordinate with payroll. Urge them to schedule a planning call before December.',
+    service: 'equity',
+    type: '',
+    state: '',
+  },
+];
+
+function nlPreset(n) {
+  nlTab('compose');
+  const p = NL_PRESETS[n - 1];
+  if (!p) return;
+  document.getElementById('nl-subject').value = p.subject;
+  document.getElementById('nl-message').value = p.message;
+  document.getElementById('nl-service').value = p.service;
+  document.getElementById('nl-type').value = p.type;
+  document.getElementById('nl-state').value = p.state;
+  toast(`Demo ${n} loaded — click Analyze & Preview`, 'ok');
+}
+
+// ── DEADLINE WATCHER ──
+async function scanDeadlines() {
+  const btn = document.getElementById('deadline-scan-btn');
+  btn.disabled = true; btn.innerHTML = '<span class="spin"></span> Scanning…';
+
+  try {
+    const data = await api('/api/deadlines/scan', { date: new Date().toISOString().slice(0, 10) });
+    const items = data.items || [];
+    const list = document.getElementById('deadline-list');
+    document.getElementById('deadline-empty').classList.add('hidden');
+    list.classList.remove('hidden');
+    if (!items.length) {
+      list.innerHTML = '<div class="glass p-6 text-slate-500 text-sm text-center">No urgent deadlines — all clear</div>';
+      document.getElementById('dash-deadlines').textContent = '0';
+      return;
+    }
+    list.innerHTML = items.map(item => `
+      <div class="glass p-4 flex items-start justify-between gap-4">
+        <div class="flex-1">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="badge badge-${item.severity || 'medium'}">${(item.severity || 'medium').toUpperCase()}</span>
+            <span class="text-white text-sm font-semibold">${esc(item.client)}</span>
+          </div>
+          <div class="text-slate-400 text-xs">${esc(item.type)} · Due: <strong class="text-slate-300">${esc(item.dueDate)}</strong></div>
+        </div>
+        <button class="neon-btn neon-btn-sm flex-shrink-0" onclick='sendDeadlineReminder(${JSON.stringify(item).replace(/'/g,"&#39;")})'>✉ Remind</button>
+      </div>
+    `).join('');
+    const urgent = items.filter(i => i.severity === 'high').length;
+    document.getElementById('dash-deadlines').textContent = urgent || items.length;
+    addActivityLocal(`Deadline scan: ${items.length} obligations found`);
+  } catch (e) { toast(e.message, 'err'); }
+  finally { btn.disabled = false; btn.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:4px"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg> Scan Now'; }
+}
+
+async function sendDeadlineReminder(item) {
+  try {
+    await api('/api/deadlines/remind', { client: item.client, type: item.type, dueDate: item.dueDate });
+    toast(`Reminder sent → ${item.client}`, 'ok');
+    addActivityLocal(`Deadline reminder → ${item.client}`);
+  } catch (e) { toast(e.message, 'err'); }
+}
+
+// ── Activity ──
+const localLog = [];
+function addActivityLocal(msg) {
+  localLog.unshift({ msg, t: new Date() });
+  if (localLog.length > 20) localLog.pop();
+  const el = document.getElementById('dash-activity');
+  el.innerHTML = localLog.slice(0, 8).map(a => `
+    <div class="flex items-start gap-3 py-2 border-b border-white/05 last:border-0">
+      <span class="text-slate-600 text-xs whitespace-nowrap mt-0.5">${fmtTime(a.t)}</span>
+      <span class="text-slate-400 text-sm">${esc(a.msg)}</span>
+    </div>
+  `).join('');
+}
+
+// ── Utils ──
+function esc(s) {
+  if (typeof s !== 'string') s = String(s ?? '');
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function fmtTime(t) {
+  if (!t) return '';
+  const d = t instanceof Date ? t : new Date(t);
+  if (isNaN(d)) return String(t);
+  return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+}
+
+// ── Init ──
+updateEnvPill();
+</script>
+</body>
+</html>

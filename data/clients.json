@@ -1,0 +1,181 @@
+[
+  {
+    "id": "nexus-ai",
+    "name": "Nexus AI Corp",
+    "type": "C-Corp",
+    "state": "DE",
+    "ein": "88-1234567",
+    "contactName": "Sarah Chen",
+    "email": "sarah.chen@nexus-ai.example.com",
+    "services": [
+      "corporate-tax",
+      "r-and-d",
+      "equity"
+    ],
+    "founded": 2022,
+    "preparer": "Staff CPA",
+    "raised": "$18M Series A",
+    "notes": "AGI research startup. Heavy R&D spend. Equity grants outstanding."
+  },
+  {
+    "id": "stackflow-labs",
+    "name": "Stackflow Labs Inc.",
+    "type": "C-Corp",
+    "state": "DE",
+    "ein": "88-2345678",
+    "contactName": "Raj Patel",
+    "email": "raj@stackflow.example.com",
+    "services": [
+      "corporate-tax",
+      "r-and-d",
+      "multi-state"
+    ],
+    "founded": 2021,
+    "preparer": "Staff CPA",
+    "raised": "$32M Series B",
+    "notes": "DevTools. Employees in CA, NY, TX. R&D credits claimed annually."
+  },
+  {
+    "id": "harbor-protocol",
+    "name": "Harbor Protocol LLC",
+    "type": "LLC",
+    "state": "WY",
+    "ein": "88-3456789",
+    "contactName": "Leo Park",
+    "email": "leo@harborprotocol.example.com",
+    "services": [
+      "corporate-tax",
+      "crypto",
+      "multi-state"
+    ],
+    "founded": 2023,
+    "preparer": "Staff CPA",
+    "raised": "$8M Seed",
+    "notes": "DeFi protocol. Significant crypto trading activity. Multi-state nexus."
+  },
+  {
+    "id": "meridian-health",
+    "name": "Meridian Health Technologies",
+    "type": "S-Corp",
+    "state": "TX",
+    "ein": "88-4567890",
+    "contactName": "Dr. Amanda Ross",
+    "email": "finance@meridianhealth.example.com",
+    "services": [
+      "corporate-tax",
+      "multi-state"
+    ],
+    "founded": 2020,
+    "preparer": "Staff CPA",
+    "raised": "$45M Series C",
+    "notes": "HealthTech. S-Corp election for tax efficiency. Operations in 8 states."
+  },
+  {
+    "id": "prism-data",
+    "name": "Prism Data Analytics Inc.",
+    "type": "C-Corp",
+    "state": "DE",
+    "ein": "88-5678901",
+    "contactName": "Marcus Webb",
+    "email": "marcus@prismdata.example.com",
+    "services": [
+      "corporate-tax",
+      "r-and-d",
+      "equity"
+    ],
+    "founded": 2022,
+    "preparer": "Staff CPA",
+    "raised": "$22M Series A",
+    "notes": "Enterprise data platform. Large equity pool. RSU vesting this year."
+  },
+  {
+    "id": "cloudpeak-systems",
+    "name": "CloudPeak Systems Inc.",
+    "type": "C-Corp",
+    "state": "CA",
+    "ein": "88-6789012",
+    "contactName": "Nina Torres",
+    "email": "nina@cloudpeak.example.com",
+    "services": [
+      "corporate-tax",
+      "r-and-d",
+      "equity",
+      "multi-state"
+    ],
+    "founded": 2019,
+    "preparer": "Staff CPA",
+    "raised": "$120M Series D",
+    "notes": "Cloud infrastructure. Mature company, complex cap table. CA entity."
+  },
+  {
+    "id": "vantage-capital",
+    "name": "Vantage Capital Group LLC",
+    "type": "LLC",
+    "state": "NY",
+    "ein": "88-7890123",
+    "contactName": "James Aldrich",
+    "email": "james@vantagecapital.example.com",
+    "services": [
+      "corporate-tax",
+      "equity",
+      "multi-state"
+    ],
+    "founded": 2021,
+    "preparer": "Staff CPA",
+    "raised": "$60M Series B",
+    "notes": "Fintech. NY-based. Complex K-1 distributions to partners."
+  },
+  {
+    "id": "aurora-robotics",
+    "name": "Aurora Robotics Corp",
+    "type": "C-Corp",
+    "state": "DE",
+    "ein": "88-8901234",
+    "contactName": "Dr. Kevin Liu",
+    "email": "kevin@aurorarobotics.example.com",
+    "services": [
+      "corporate-tax",
+      "r-and-d",
+      "equity"
+    ],
+    "founded": 2023,
+    "preparer": "Staff CPA",
+    "raised": "$14M Seed",
+    "notes": "Industrial robotics. Massive R&D spend ratio. Early stage."
+  },
+  {
+    "id": "cobalt-security",
+    "name": "Cobalt Security Inc.",
+    "type": "C-Corp",
+    "state": "DE",
+    "ein": "88-9012345",
+    "contactName": "Priya Nair",
+    "email": "priya@cobaltsec.example.com",
+    "services": [
+      "corporate-tax",
+      "r-and-d"
+    ],
+    "founded": 2021,
+    "preparer": "Staff CPA",
+    "raised": "$28M Series A",
+    "notes": "Cybersecurity SaaS. R&D credits on security research. Clean cap table."
+  },
+  {
+    "id": "waymark-studio",
+    "name": "Waymark Studio LLC",
+    "type": "LLC",
+    "state": "CA",
+    "ein": "88-0123456",
+    "contactName": "Elena Vasquez",
+    "email": "elena@waymark.example.com",
+    "services": [
+      "corporate-tax",
+      "multi-state",
+      "equity"
+    ],
+    "founded": 2022,
+    "preparer": "Staff CPA",
+    "raised": "$5M Seed",
+    "notes": "AI-powered creative tools. CA LLC. Small team, distributed workforce."
+  }
+]

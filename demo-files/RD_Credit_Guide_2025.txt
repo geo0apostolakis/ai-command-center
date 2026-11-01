@@ -1,0 +1,215 @@
+ACME TAX — STARTUP TAX GUIDE 2025
+R&D Credits, QSBS, Equity Taxation, and Estimated Taxes for Funded Tech Companies
+
+Prepared for Acme Tax CPAs | Confidential Reference Document
+
+
+==============================================================================
+SECTION 1: RESEARCH AND DEVELOPMENT TAX CREDITS (IRC § 41)
+==============================================================================
+
+1.1 OVERVIEW
+
+The Research and Experimentation (R&E) tax credit under Internal Revenue Code Section 41 is one of the most valuable tax incentives available to technology startups. For a typical pre-profitable startup spending $2–5M annually on qualified R&D, the credit can eliminate all federal income tax liability and generate a direct payroll tax offset worth hundreds of thousands of dollars per year.
+
+There are two calculation methods available to taxpayers: the Regular Credit method and the Alternative Simplified Credit (ASC) method.
+
+
+1.2 ALTERNATIVE SIMPLIFIED CREDIT (ASC) — THE PREFERRED METHOD
+
+The Alternative Simplified Credit (ASC) equals 14% of the qualified research expenditures (QREs) that exceed 50% of the average QREs for the prior three taxable years. If the taxpayer had no QREs in any of the prior three years, the credit equals 6% of QREs for the current year.
+
+Formula:
+  ASC = 14% × (Current Year QREs − 50% × Average of Prior 3 Years' QREs)
+
+The ASC is the most commonly used method for startups because it avoids the complexity of the regular credit's historical base period calculations. Most of the firm's clients elect the ASC method on Form 6765.
+
+Example: If Nexus AI Corp has $3,000,000 in 2025 QREs and averaged $1,800,000 QREs over 2022–2024:
+  Base = 50% × $1,800,000 = $900,000
+  Excess QREs = $3,000,000 − $900,000 = $2,100,000
+  ASC Credit = 14% × $2,100,000 = $294,000
+
+
+1.3 REGULAR CREDIT METHOD
+
+The Regular Credit is 20% of the excess of current year QREs over the "base amount." The base amount equals the taxpayer's fixed base percentage multiplied by its average annual gross receipts for the four preceding taxable years. The minimum base amount is 50% of QREs.
+
+Because calculating the fixed base percentage requires historical data going back to 1984–1988 for many established companies, the Regular Credit is rarely elected by startups. The ASC is simpler and often yields comparable results.
+
+
+1.4 QUALIFIED RESEARCH EXPENDITURES (QREs)
+
+To qualify, research must satisfy the Four-Part Test under IRC § 41(d):
+
+1. Technological in Nature: The activity must rely on principles of physical, biological, computer, or engineering science.
+2. Permitted Purpose: The research must be intended to develop a new or improved business component (product, process, software, technique, formula, or invention).
+3. Elimination of Uncertainty: The taxpayer must intend to discover information that eliminates technical uncertainty about the capability, method, or design.
+4. Process of Experimentation: The taxpayer must actually conduct a process of experimentation — forming hypotheses, testing, and refining.
+
+Qualifying expenditures include:
+- Wages paid to employees directly engaged in, supervising, or supporting qualified research (65% of contractor costs also qualify)
+- Supplies consumed in the conduct of qualified research
+- Contract research expenses (65% of amounts paid to non-employees for qualified research)
+- Basic research payments to qualified organizations
+
+Activities that do NOT qualify:
+- Research funded by grants, contracts, or third-party payments
+- Research after commercial production begins (routine testing, quality control)
+- Market research, surveys, advertising, or social science research
+- Adaptation of existing business components for a particular customer's needs
+
+
+1.5 STARTUP PAYROLL TAX OFFSET — THE $500,000 OPPORTUNITY
+
+Qualified small businesses may elect to apply up to $500,000 per year of R&D credits against the employer's share of Social Security (OASDI) payroll taxes under IRC § 41(h). This is the single most impactful feature for pre-revenue startups, because it converts an otherwise unusable income tax credit into immediate cash flow.
+
+To qualify as a "qualified small business" for the payroll tax offset, a company must:
+1. Have gross receipts of less than $5 million for the current year
+2. Have had no gross receipts for any taxable year before the 5-taxable-year period ending with the current year (i.e., the company must be less than 5 years old)
+
+The maximum annual payroll tax offset is $500,000 per year. Effective for tax years beginning after December 31, 2022 (under the Inflation Reduction Act), this limit was doubled from the prior $250,000 cap. The credit is claimed on Form 8974 and applied against the employer's quarterly payroll tax deposits.
+
+A startup with 20 employees and $4M in annual payroll can offset its entire employer OASDI liability for two or more quarters using this credit — resulting in $500,000 of real cash not paid to the IRS.
+
+
+==============================================================================
+SECTION 2: QUALIFIED SMALL BUSINESS STOCK (QSBS) — IRC § 1202
+==============================================================================
+
+2.1 OVERVIEW
+
+Section 1202 of the Internal Revenue Code provides one of the most powerful tax exclusions in the US tax code: up to 100% of the capital gain from the sale of Qualified Small Business Stock (QSBS) can be excluded from federal income tax. For founders and early employees, this can mean millions of dollars in tax-free gains.
+
+This provision is frequently referred to as the "QSBS exclusion" or the "Section 1202 exclusion."
+
+
+2.2 HOLDING PERIOD REQUIREMENT
+
+The investor or employee must hold the QSBS for more than five years to qualify for the exclusion. Stock that is sold or exchanged before the 5-year holding period is not eligible for Section 1202 treatment, regardless of all other criteria.
+
+There is no partial credit for holding periods shorter than five years. The full five-year period is a hard threshold.
+
+
+2.3 EXCLUSION LIMITS
+
+The amount of gain excluded under Section 1202 is capped at the greater of:
+- $10,000,000, OR
+- 10 times the taxpayer's adjusted basis in the stock
+
+The exclusion applies per-taxpayer, per-issuer. A married couple filing jointly each has a separate $10M cap, effectively providing $20M in tax-free gain from a single investment in a qualifying company.
+
+
+2.4 QUALIFIED SMALL BUSINESS REQUIREMENTS
+
+For stock to qualify as QSBS, all of the following must be true at the time of issuance:
+
+1. The company must be a domestic C-Corporation (not an LLC, S-Corp, or partnership).
+2. The company's aggregate gross assets must not exceed $50,000,000 at the time of issuance AND immediately after issuance (taking into account amounts received in the financing that includes the QSBS issuance).
+3. The stock must be acquired at original issuance in exchange for money, property, or services — secondary market purchases do not qualify.
+4. The company must be an active business. At least 80% of its assets (by value) must be used in the active conduct of one or more qualified trades or businesses.
+5. The company must NOT be engaged in certain excluded businesses: professional services (health, law, engineering, accounting, consulting, financial services, brokerage, athletics, performing arts), hospitality, farming, mining, or financial businesses.
+
+Technology companies — software, SaaS, hardware, biotech, cleantech — generally qualify as active QSBs.
+
+
+2.5 PRACTICAL NOTES FOR CLIENTS
+
+Most of the firm's clients are C-Corps in technology, which means they are strong QSBS candidates. CPAs should:
+- Confirm the company's gross assets were under $50M at each funding round
+- Obtain Section 1202 representations from the company at each issuance
+- Advise founders to track their QSBS basis and issue date carefully
+- Note that California does NOT conform to the federal QSBS exclusion — California taxes all capital gain at ordinary income rates regardless of Section 1202
+
+
+==============================================================================
+SECTION 3: EQUITY COMPENSATION — RSU AND OPTION TAXATION
+==============================================================================
+
+3.1 RESTRICTED STOCK UNITS (RSUs)
+
+RSU vest events are taxable as ordinary income in the year of vesting. The fair market value (FMV) of the shares on the vesting date is included in the employee's W-2 income. The employer is required to withhold payroll taxes and federal/state income tax at the time of vesting.
+
+The tax basis in the vested shares equals the FMV at vesting (i.e., the amount already included in ordinary income). Any subsequent gain or loss on sale is a capital gain or loss. If the shares are held for more than one year after vesting, the gain is long-term capital gain. If sold within one year, the gain is short-term.
+
+Common client issue: RSU holders at late-stage startups sometimes receive illiquid shares they cannot sell but owe income tax on immediately. CPAs should model this "phantom income" risk during Q4 planning.
+
+
+3.2 INCENTIVE STOCK OPTIONS (ISOs)
+
+ISOs receive special tax treatment:
+- No income tax at grant or exercise (but the spread at exercise IS an Alternative Minimum Tax preference item)
+- If the employee satisfies the holding period requirements (holds the shares for at least 2 years from grant date AND at least 1 year from exercise date), the entire gain on sale qualifies as long-term capital gain
+- If the employee sells before satisfying the holding period, a "disqualifying disposition" occurs and the spread at exercise is treated as ordinary income
+
+
+==============================================================================
+SECTION 4: FEDERAL ESTIMATED TAX PAYMENTS
+==============================================================================
+
+4.1 WHO MUST PAY
+
+C-Corporations must pay estimated taxes if they expect to owe $500 or more in federal income tax for the year. Failure to pay sufficient estimated taxes results in an underpayment penalty under IRC § 6655.
+
+Individuals (founders, consultants) must pay estimated taxes if they expect to owe at least $1,000 in federal income tax after withholding.
+
+
+4.2 SAFE HARBOR RULES
+
+To avoid the underpayment penalty, a corporation must pay the lesser of:
+1. 100% of the tax shown on the prior year's return, OR
+2. 100% of the tax owed for the current year (based on annualized income)
+
+Individuals use a similar safe harbor: pay the lesser of 100% of prior year tax (110% if prior year AGI exceeded $150,000) or 90% of current year tax.
+
+
+4.3 PAYMENT SCHEDULE — 2026 DUE DATES
+
+Corporations (calendar year):
+- Q1: April 15, 2026
+- Q2: June 15, 2026
+- Q3: September 15, 2026
+- Q4: December 15, 2026
+
+Individuals (calendar year):
+- Q1: April 15, 2026
+- Q2: June 15, 2026
+- Q3: September 15, 2026
+- Q4: January 15, 2027
+
+The Q3 estimated tax payment deadline is September 15, 2026 for both corporations and individuals.
+
+
+4.4 EXTENSIONS
+
+Filing an extension (Form 7004 for corporations, Form 4868 for individuals) extends the time to FILE the return, not the time to PAY. All taxes owed are still due on the original due date. Failure to pay by the original deadline results in late payment penalties and interest.
+
+
+==============================================================================
+SECTION 5: KEY FORM DEADLINES — 2026
+==============================================================================
+
+Form 1120 (C-Corporation Income Tax Return):
+- Original due date: April 15, 2026 (for calendar-year corporations)
+- Extended due date: October 15, 2026 (with timely Form 7004 extension)
+
+Form 1065 (Partnership Return):
+- Original due date: March 15, 2026
+- Extended due date: September 15, 2026
+
+Form 1120-S (S-Corporation Return):
+- Original due date: March 15, 2026
+- Extended due date: September 15, 2026
+
+Form W-2 / 1099-NEC:
+- Recipient copy deadline: January 31, 2026
+- IRS e-file deadline: March 31, 2026
+
+Form 8974 (Payroll Tax Credit):
+- Filed with each applicable quarterly Form 941
+
+
+==============================================================================
+PREPARED BY: ACME TAX INTERNAL REFERENCE TEAM
+VERSION: 2025.2 | LAST UPDATED: JUNE 2025
+This document is for internal CPA use only. Not for distribution to clients without review.
+==============================================================================
